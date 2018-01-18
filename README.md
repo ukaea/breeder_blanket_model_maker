@@ -19,17 +19,16 @@ You can also:
   - Export toroidally segmented breeder zones with uniform or repeating structures
 ### Tech
 Breeder_blanket_model_maker uses a number of open source projects to work properly:
-* [FreeCAD] -  a fully scriptable open source parametric 3D modeler
-* [Python] - a programming language that lets you work quickly and integrate systems more effectively
-And of course Breeder_blanket_model_maker itself is open source with a [public repository] on GitHub.
+* [FreeCAD](https://www.freecadweb.org) -  a fully scriptable open source parametric 3D modeler
+* [Python](https://www.python.org) - a programming language that lets you work quickly and integrate systems more effectively
+And of course Breeder_blanket_model_maker itself is open source with a [public repository](https://github.com/ukaea/breeder_blanket_model_maker) on GitHub.
 ### Installation
 Breeder_blanket_model_maker requires [FreeCAD](https://www.freecadweb.org/wiki/Installing) v0.16.670x + to run.
 ### Todos
  - Write MORE Tests
  - Upload tested source code
  - Write user documentation
-[//]: #
-   [FreeCADinstall]: <https://www.freecadweb.org/wiki/Installing>
-   [FreeCAD]: <https://www.freecadweb.org>   
-   [Python]: <https://www.python.org/>
-   [public repository]: <https://github.com/ukaea/breeder_blanket_model_maker>
+
+
+   
+   
