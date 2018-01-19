@@ -1,5 +1,9 @@
 [![N|Python](https://www.python.org/static/community_logos/python-powered-w-100x40.png)](https://www.python.org)
 # Design goals
+
+![all_blankets_image](https://raw.githubusercontent.com/ukaea/breeder_blanket_model_maker/master/all_blankets.jpg)
+
+
 Breeder_blanket_model_maker is a parametric 3D geometry maker for creating detailed CAD designs of breeder blankets. The main goals of the software are:
   - Automate the process of creating blanket models
   - Accelerate the use of parametric design in fusion
