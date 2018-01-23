@@ -422,59 +422,65 @@ class detailed_module:
         print('list_of_edges_to_fillet',list_of_edges_to_fillet)
         print('list_of_edge_to_fillet_ids',list_of_edge_to_fillet_ids)
 
-        top_bottom_faces=[]
+
+
+
+        faces_with_vectors_not_pointing_in_y = []
 
         for i, face in enumerate(envelope.Faces):
-            if i != self.envelope_front_face_id and i!= self.envelope_back_face_id:
-
-                print('new face')
-                list_of_z_points=[]
-                for vertexes in face.Vertexes:
-                    list_of_z_points.append(round(vertexes.Point.z,1))
-                    print('   ',vertexes.Point.z)
-                print(list_of_z_points)
-                number_of_matching_z_points = Counter(list_of_z_points)
-
-                # list_of_x_points=[]
-                # for vertexes in face.Vertexes:
-                #     list_of_x_points.append(round(vertexes.Point.x,2))
-                #     print('   ',vertexes.Point.x)
-                # print(list_of_x_points)
-                # number_of_matching_x_points = Counter(list_of_x_points)
-
-
-                if number_of_matching_z_points.values() ==[2,2] or number_of_matching_z_points.values() ==[4]:
-                    print('pass z')
-                    # if number_of_matching_x_points.values() ==[2,2] or number_of_matching_x_points.values() ==[4]:
-                    #
-                    #     print('pass x')
-                    #
-                    top_bottom_faces.append(face)
-
-
-
-        if len(top_bottom_faces)==2:
-
-            return top_bottom_faces
-        else:
-
-            faces_with_vectors_not_pointing_in_y=[]
-
-            for face in top_bottom_faces:
+            if i != self.envelope_front_face_id and i != self.envelope_back_face_id:
                 print(face.normalAt(0, 0))
-                if face.normalAt(0, 0).y < max(face.normalAt(0, 0).x,face.normalAt(0, 0).z):
+                if abs(face.normalAt(0, 0).y) < max(abs(face.normalAt(0, 0).x), abs(face.normalAt(0, 0).z)):
                     faces_with_vectors_not_pointing_in_y.append(face)
+                    print('appending top bottom face', face.normalAt(0, 0))
 
+        if len(faces_with_vectors_not_pointing_in_y) == 2:
+            print('faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z', faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z)
+            if faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z > faces_with_vectors_not_pointing_in_y[1].CenterOfMass.z:
 
-            print('method failed, on '+self.envelope_directory_filename+' to many or few faces found')
-            print(top_bottom_faces)
-            Part.makeCompound(top_bottom_faces).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces.step'))
-            Part.makeCompound([front_face]).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces_ff.step'))
-
-            if len(faces_with_vectors_not_pointing_in_y) == 2:
                 return faces_with_vectors_not_pointing_in_y
             else:
-                print('2nd method failed'+self.envelope_directory_filename+' to many or few faces found')
+                return faces_with_vectors_not_pointing_in_y[::-1]
+        else:
+            print('method of finding top bottom faces failed for '+self.envelope_directory_filename+' to many or few faces found')
+
+            top_bottom_faces=[]
+
+            for i, face in enumerate(envelope.Faces):
+                if i != self.envelope_front_face_id and i!= self.envelope_back_face_id:
+
+                    print('new face')
+                    list_of_z_points=[]
+                    for vertexes in face.Vertexes:
+                        list_of_z_points.append(round(vertexes.Point.z,1))
+                        print('   ',vertexes.Point.z)
+                    print(list_of_z_points)
+                    number_of_matching_z_points = Counter(list_of_z_points)
+
+
+                    if number_of_matching_z_points.values() ==[2,2] or number_of_matching_z_points.values() ==[4]:
+                        print('pass z')
+
+                        top_bottom_faces.append(face)
+
+
+
+            if len(top_bottom_faces)==2:
+
+                # return top_bottom_faces
+                print('top_bottom_faces[0].CenterOfMass',top_bottom_faces[0].CenterOfMass)
+                if top_bottom_faces[0].CenterOfMass.Point.z > top_bottom_faces[1].CenterOfMass.Point.z:
+                    return top_bottom_faces
+                else:
+                    return top_bottom_faces[::-1]
+
+            else:
+
+                print('method failed, on '+self.envelope_directory_filename+' to many or few faces found')
+                print(top_bottom_faces)
+                Part.makeCompound(top_bottom_faces).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces.step'))
+                Part.makeCompound([front_face]).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces_ff.step'))
+
                 sys.exit()
 
     def Filleted_envelope(self,fillet_radius,edges):
