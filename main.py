@@ -2,13 +2,13 @@
 import sys
 sys.dont_write_bytecode = True
 sys.path.append('/usr/lib/freecad-daily/lib/')
-sys.path.append('/usr/local/lib/')
+#sys.path.append('/usr/local/lib/')
 import math
 import FreeCAD
 from FreeCAD import Base
 import Part
 import os
-
+from collections import Counter
 
 class detailed_module:
 
@@ -17,7 +17,6 @@ class detailed_module:
         self.blanket_type = blanket_parameters_dict['blanket_type']
         self.envelope_directory_filename = blanket_parameters_dict['envelope_filename']
         self.output_folder = blanket_parameters_dict['output_folder']
-        
 
         self.armour_thickness = blanket_parameters_dict['armour_thickness']
         self.first_wall_thickness = blanket_parameters_dict['first_wall_thickness']
@@ -36,10 +35,11 @@ class detailed_module:
         self.envelope_back_face =find_envelope_back_face(self.envelope,self.plasma)
         self.envelope_front_face =find_envelope_front_face(self.envelope,self.envelope_back_face)
         self.front_face_midpoint = self.Find_front_face_midpoint(self.envelope_front_face)
+        self.envelope_front_face_id = self.Envelope_front_face_id(self.envelope)
+        self.envelope_back_face_id = find_envelope_back_face_id(self.envelope,self.plasma)
 
         self.front_face_polodial_edges_to_fillet =self.Find_front_face_polodial_edges_to_fillet()
         self.front_face_torodial_edges_to_fillet =self.Find_front_face_torodial_edges_to_fillet()
-
 
 
 
@@ -58,16 +58,16 @@ class detailed_module:
             self.first_wall_armour, self.envelope_removed_armour = self.Chop_off_first_wall_armour()
 
             self.armour_removed_envelope_back_face = find_envelope_back_face(self.envelope_removed_armour, self.plasma)
-            self.armour_removed_envelope_front_face = find_envelope_front_face(self.envelope_removed_armour,
-                                                                               self.armour_removed_envelope_back_face)
+            self.armour_removed_envelope_front_face = find_envelope_front_face(self.envelope_removed_armour,self.armour_removed_envelope_back_face)
 
             self.first_wall, self.first_wall_removed_envelope = self.Chop_off_first_wall()
-            self.first_wall_removed_envelope_back_face = find_envelope_back_face(self.first_wall_removed_envelope,
-                                                                                 self.plasma)
-            self.first_wall_removed_envelope_front_face = find_envelope_front_face(self.first_wall_removed_envelope,
-                                                                                   self.first_wall_removed_envelope_back_face)
-            self.first_wall_removed_envelope_midpoint = self.Find_front_face_midpoint(
-                self.first_wall_removed_envelope_front_face)
+            self.first_wall_removed_envelope_back_face = find_envelope_back_face(self.first_wall_removed_envelope,self.plasma)
+            self.first_wall_removed_envelope_front_face = find_envelope_front_face(self.first_wall_removed_envelope,self.first_wall_removed_envelope_back_face)
+            self.first_wall_removed_envelope_midpoint = self.Find_front_face_midpoint(self.first_wall_removed_envelope_front_face)
+
+            if 'cooling_channel_offset_from_first_wall' in blanket_parameters_dict and 'first_wall_channel_toroidal_mm' in blanket_parameters_dict and 'first_wall_channel_poloidal_mm' in blanket_parameters_dict and 'first_wall_channel_pitch_mm' in blanket_parameters_dict:
+                print('calculating first wall cooling pipes')
+                #sys.exit()
 
             self.end_caps, self.envelope_removed_endcaps = self.Chop_of_end_caps()
             self.back_face_envelope_removed_caps = find_envelope_back_face(self.envelope_removed_endcaps, self.plasma)
@@ -182,8 +182,7 @@ class detailed_module:
             self.filleted_envelope = self.Filleted_envelope(self.first_wall_toroidal_fillet_radius,self.front_face_torodial_edges_to_fillet)
 
             self.filleted_envelope_back_face = find_envelope_back_face(self.filleted_envelope, self.plasma)
-            self.filleted_envelope_front_face = find_envelope_front_face(self.filleted_envelope,
-                                                                         self.filleted_envelope_back_face)
+            self.filleted_envelope_front_face = find_envelope_front_face(self.filleted_envelope,self.filleted_envelope_back_face)
             self.filleted_envelope_front_face_id = self.Envelope_front_face_id(self.filleted_envelope)
 
             self.end_cap_faces = self.Find_end_cap_faces()
@@ -279,6 +278,8 @@ class detailed_module:
 
     def Save_file_as_step(self,module_filename):
 
+        if not os.path.exists(os.path.join(self.output_folder)):
+            os.makedirs(os.path.join(self.output_folder))
 
         if self.blanket_type=='HCPB':
             filenames=["backwalls.step","firstwall.step","armour.step","end_caps.step","breeder_material.step","cooling_plate.step","neutron_multiplier.step"]
@@ -393,6 +394,7 @@ class detailed_module:
 
     def Find_poloidal_upper_and_lower_faces(self):
         # this is not a very robust method of finding top bottom faces
+        # it relies on mesurments of faces being the same
         # todo improve this method
         list_of_edges_to_fillet = []
         list_of_edge_to_fillet_ids = []
@@ -421,20 +423,32 @@ class detailed_module:
         print('list_of_edge_to_fillet_ids',list_of_edge_to_fillet_ids)
 
         top_bottom_faces=[]
-        for face in envelope.Faces:
-            if face.Area !=back_face.Area:
-                for edge in face.Edges:
 
-                    #if edge in list_of_edges_to_fillet:
-                    if edge.Length in list_of_edge_to_fillet_lengths:#.append(edge.Length):
-                        print('found edge with correct length', edge.Length)
-                        if face not in top_bottom_faces :
-                            top_bottom_faces.append(face)
+        for i, face in enumerate(envelope.Faces):
+            if i != self.envelope_front_face_id and i!= self.envelope_back_face_id:
+
+                print('new face')
+                list_of_z_points=[]
+                for vertexes in face.Vertexes:
+                    list_of_z_points.append(vertexes.Point.z)
+                    print('   ',vertexes.Point.z)
+                print(list_of_z_points)
+                number_of_matching_z_points = Counter(list_of_z_points)
+
+                if number_of_matching_z_points.values() ==[2,2]:
+                    print('pass')
+                    top_bottom_faces.append(face)
+
+
         if len(top_bottom_faces)==2:
 
             return top_bottom_faces
         else:
-            print('method failed, to many or few faces found')
+            print('method failed, on '+self.envelope_directory_filename+' to many or few faces found')
+            print(top_bottom_faces)
+            Part.makeCompound(top_bottom_faces).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces.step'))
+            Part.makeCompound([front_face]).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces_ff.step'))
+            sys.exit()
 
     def Filleted_envelope(self,fillet_radius,edges):
 
@@ -887,6 +901,22 @@ def find_envelope_back_face(wedge,plasma):
         print('Back face not found')
         return None
     return wedge.Faces[furthest_face_id]
+
+def find_envelope_back_face_id(wedge,plasma):
+    print('Finding face furthest from the plasma for ',wedge)
+    largest_distance = 0
+
+    #for counter, face in enumerate(self.envelope.Faces):
+    for counter, face in enumerate(wedge.Faces):
+        distance = face.distToShape(plasma)[0]
+        if distance > largest_distance:
+            largest_distance = distance
+            furthest_face = face
+            furthest_face_id = counter
+    if not furthest_face:
+        print('Back face not found')
+        return None
+    return furthest_face_id
 
 def find_envelope_front_face(wedge,back_face):
     print('Finding front face for ' ,wedge)

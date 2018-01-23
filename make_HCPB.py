@@ -12,6 +12,10 @@ HCPB_blanket_parameters =  {
     'back_walls_thicknesses' : [30,50,30,25,10],
     'poloidal_segmentations' : [60,5,15,5],
 
+    'cooling_channel_offset_from_first_wall': 3,
+    'first_wall_channel_toroidal_mm': 13.5,
+    'first_wall_channel_poloidal_mm': 13.5,
+    'first_wall_channel_pitch_mm': 4.5,
 }
 
 generated_detailed_module = detailed_module(HCPB_blanket_parameters)
