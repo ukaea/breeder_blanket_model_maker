@@ -27,6 +27,7 @@ import os
 import Mesh
 import Draft
 import MeshPart
+from common_functions import *
 
 def read_in_stl_files_and_resave(read_folder,write_folder):
     try:
@@ -88,6 +89,25 @@ def read_in_step_files_and_resave_seperated(read_folder,write_folder):
                 solid.exportStep(write_folder+'/'+os.path.splitext(file)[0]+str(file_counter)+'.stp')
                 file_counter=file_counter+1
 
+def read_in_seperate_step_files_and_resave_as_one(read_folder,write_folder,prefix_required):
+    try:
+        os.mkdir(write_folder)
+    except:
+        print('error making folder')
+    list_of_all_solids=[]
+    for file in os.listdir(read_folder):
+        if file.endswith(".step") or  file.endswith(".stp") :
+            if file.startswith(prefix_required):
+                print('reading in ' ,os.path.join(read_folder, file))
+                multipart_step = Part.read(os.path.join(read_folder, file))
+
+                if type(multipart_step.Solids)==list:
+                    list_of_all_solids=list_of_all_solids+multipart_step.Solids
+                else:
+                    list_of_all_solids.append(multipart_step.Solids)
+
+    Part.makeCompound(list_of_all_solids).exportStep(os.path.join(write_folder,'grouped_'+prefix_required+'.step'))
+
 def read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder,ignore_files=['']):
     try:
         os.mkdir(write_folder)
@@ -95,34 +115,47 @@ def read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder
     except:
         print('error making folder',write_folder)
 
+    dictionary_of_parts = collections.defaultdict(dict)
+
     if type(read_folder)==str:
         print('read_folder',read_folder)
         print(os.listdir(read_folder))
 
-
-
         for file in os.listdir(read_folder):
             if file not in ignore_files:
+                print(file)
                 if file.endswith(".step") or  file.endswith(".stp"):
                     print('reading in ' ,os.path.join(read_folder, file))
                     multipart_step = Part.read(os.path.join(read_folder, file))
+
+                    filestub = os.path.splitext(file)[0]
+
+                    dictionary_of_parts[filestub]['part'] = multipart_step
                     file_counter=1
+
+                    stl_file_list=[]
+
                     for solid in multipart_step.Solids:
                         solid_mesh = MeshPart.meshFromShape(solid, LinearDeflection=0.1)
                         stl_filename= write_folder+'/'+os.path.splitext(file)[0]+'_'+str(file_counter)+'.stl'
-                        print(stl_filename)
+                        #print(stl_filename)
                         solid_mesh.write(stl_filename)
                         file_counter=file_counter+1
+                        stl_file_list.append(stl_filename)
                     if len(multipart_step.Solids)==0:
                         singlepart_step=multipart_step
                         solid_mesh = MeshPart.meshFromShape(singlepart_step, LinearDeflection=0.1)
                         stl_filename= write_folder+'/'+os.path.splitext(file)[0]+'_'+str(file_counter)+'.stl'
-                        print(stl_filename)
+                        #print(stl_filename)
                         solid_mesh.write(stl_filename)
-                        file_counter=file_counter+1                    
+                        file_counter=file_counter+1
+                        stl_file_list.append(stl_filename)
+
+                    dictionary_of_parts[filestub]['stl_filename'] =stl_file_list
                     #if file =='plasma.stp':
                     #    print len(multipart_step.Solids)
                     #    input()
+        return dictionary_of_parts
     if type(read_folder)==list:
         file_list=read_folder
         for file in file_list:
@@ -184,17 +217,40 @@ def read_in_system_arguments():
         elif sys.argv[i] == "-wf":
             write_folder = sys.argv[i + 1]
             i += 2
+        elif sys.argv[i] == "-prefix":
+            prefix_required = sys.argv[i + 1]
+            i += 2            
         else:
             # end of flags found
             break
 
-    return read_folder , write_folder
+    return read_folder , write_folder,prefix_required
+
+
+def copy_stl_files(read_folder,write_folder,ignore_files=[]):
+    #settings.input_folder + '/stl', output_folder_stl,
+    list_of_files_copied=[]
+    for file in os.listdir(read_folder):
+        if file.endswith(".stl"):
+                if file not in ignore_files:
+                    print('copying file ', os.path.join(read_folder, file), ' to ', os.path.join(write_folder, file))
+                    shutil.copyfile(os.path.join(read_folder,file), os.path.join(write_folder,file))
+                    list_of_files_copied.append(file)
+
+    return list_of_files_copied
+
+
 
 
 #read_in_step_files_and_resave_seperated("grouped_step_files","ungrouped_step_files")
 if __name__ == "__main__":
-    read_folder, write_folder = read_in_system_arguments()
-    read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder)
+    #read_folder, write_folder,prefix_required = read_in_system_arguments()
+    #read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder)
+    #read_in_seperate_step_files_and_resave_as_one(read_folder,write_folder,prefix_required)
+    extra_parts = read_in_step_files_and_resave_as_seperate_stl_files('Eurofusion_baseline_2016/reactor_step_files',
+                                                                      'Eurofusion_baseline_2016/detailed_HCPB/stl')
+
+    print(extra_parts)
     #read_in_step_files_and_resave_as_single_stl_files(read_folder,write_folder)
     #read_in_step_files_and_resave_seperated(read_folder,write_folder)
     #read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder)
