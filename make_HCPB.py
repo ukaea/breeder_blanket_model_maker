@@ -53,7 +53,7 @@ for module in module_filenames:
 
 
 
-p = multiprocessing.Pool(multiprocessing.cpu_count()-1)
+p = multiprocessing.Pool(multiprocessing.cpu_count())
 
 detailed_modules_parts = p.map(HCPB_detailed_module,list_of_compressed_arguments)
 
