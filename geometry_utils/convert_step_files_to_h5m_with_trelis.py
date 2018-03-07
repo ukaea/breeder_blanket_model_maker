@@ -5,7 +5,7 @@
 
 import os
 import sys
-#os.environ["CUBIT_PLUGIN_DIR"] ='/opt/Trelis-16.4/bin/plugins/svalinn'
+#os.environ["CUBIT_PLUGIN_DIR"] ='/opt/Trelis-16.4/bin/plugins/svalinn/'
 
 print('example use')
 #trelis -nographics -batch convert_step_files_to_h5m_with_trelis.py "inputs='m1.stp,m2.stp,m3.stp'" "materials='lithium,steel,copper'"  > output.txt
@@ -90,19 +90,21 @@ cubit.cmd('merge all')
 # opt/moab/bin/mbconvert filenamewithpath.h5m filenamewithpath.stl
 # the stl's for each material can be output seperatly using the mbconvert -v flag
 
-
-
 for vols,part,step_filename in zip(volumes_in_each_step_file,parts,input_locations):
     print('vols',vols)
     print('part',part)
-    print('step_filename',step_filename)
-    file_counter=1
-    for vol in vols:
-        stl_filename = os.path.join(output_folder,os.path.splitext(os.path.split(step_filename)[1])[0] + '_' + str(file_counter) + '.stl')
-        print('stl_filename=',stl_filename)
-        print('export STL "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
-        cubit.cmd('export STL "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
-        file_counter=file_counter+1
+    cubit.cmd('group "mat:'+part+'" add vol '+' '.join(vols))
+
+h5m_filename = os.path.join(output_folder,'detailed_blanket_model.h5m')
+print('h5m_filename=',h5m_filename)
+#export_statement = 'export dagmc "'+h5m_filename+'" faceting_tolerance 1.e-4'
+#print('export_statement=',export_statement)
+#cubit.cmd(export_statement)
+cubit.cmd('export dagmc "'+h5m_filename+'" faceting_tolerance 1.e-4')
+#cubit.cmd('export dagmc "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
+    # for vol , file_counter in enumerate(vols):
+    #     stl_filename = os.path.join(output_folder,os.path.splitext(os.path.split(step_filename)[1])[0] + '_' + str(file_counter) + '.stl')
+    #     cubit.cmd('export stl "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
 
 
 

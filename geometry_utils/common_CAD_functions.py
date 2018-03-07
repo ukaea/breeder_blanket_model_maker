@@ -109,9 +109,10 @@ def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
     aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
 
 
+    os.system('rm *.jou')
     os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
     print('trelis convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    os.system('/opt/Trelis-16.4/bin/trelis geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     print('trelis h5m done')
@@ -134,7 +135,7 @@ def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket
     aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
 
 
-
+    os.system('rm *.jou')
     print('trelis -nographics -batch convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)

@@ -169,12 +169,12 @@ def HCPB_detailed_module(blanket_parameters_dict):
       save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
 
 
-      #save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
-
 
       save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts, output_folder=output_folder_merged_stl,blanket_type=blanket_parameters_dict['blanket_type'])
 
       save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
+
+      save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
 
 
       return dictionary_of_parts
