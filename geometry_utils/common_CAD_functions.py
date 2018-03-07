@@ -2,7 +2,6 @@ import shutil
 import sys
 sys.dont_write_bytecode = True
 sys.path.append('/usr/lib/freecad-daily/lib/')
-#sys.path.append('/usr/local/lib/')
 import math
 import FreeCAD
 from FreeCAD import Base
@@ -17,6 +16,7 @@ import Draft
 import MeshPart
 
 
+
 def make_cylinder_slice(angle=10):
         radius = 20000
         height = 15000
@@ -29,6 +29,9 @@ def make_cylinder_slice(angle=10):
 def components(dictionary_of_parts):
     return dictionary_of_parts
     #return self.dictionary_of_parts
+
+
+
 
 def save_components_as_stl(dictionary_of_parts,output_folder):
 
@@ -47,7 +50,7 @@ def save_components_as_stl(dictionary_of_parts,output_folder):
 
         file_counter=1
         for solid in multipart_step.Solids:
-            solid_mesh = MeshPart.meshFromShape(solid, LinearDeflection=0.1)
+            solid_mesh = MeshPart.meshFromShape(solid, LinearDeflection=0.01)
             stl_filename= os.path.join(output_folder,os.path.splitext(os.path.split(file)[1])[0]+'_'+str(file_counter)+'.stl')
             filename_list.append(stl_filename)
             print('writing ',stl_filename)
@@ -55,7 +58,7 @@ def save_components_as_stl(dictionary_of_parts,output_folder):
             file_counter=file_counter+1
         if len(multipart_step.Solids)==0:
             singlepart_step=multipart_step
-            solid_mesh = MeshPart.meshFromShape(singlepart_step, LinearDeflection=0.1)
+            solid_mesh = MeshPart.meshFromShape(singlepart_step, LinearDeflection=0.01)
             stl_filename = os.path.join(output_folder,os.path.splitext(os.path.split(file)[1])[0] + '_' + str(file_counter) + '.stl')
             filename_list.append(stl_filename)
             print('writing ',stl_filename)
@@ -87,6 +90,62 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
         #print('output_folder',output_folder)
         print("dictionary_of_parts[component]['step_filename']",dictionary_of_parts[component]['step_filename'])
         component_compound_sliced_with_cylinder.exportStep(dictionary_of_parts[component]['step_filename'])
+
+def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
+    # this does not work at the moment
+    #os.environ["CUBIT_PLUGIN_DIR"] = '/opt/Trelis-16.4/bin/plugins/svalinn/'
+    try:
+        os.makedirs(output_folder)
+    except:
+        pass
+    aprepro_output_file_string = ' "output_folder='+"'"+output_folder+"'"+'"'
+    aprepro_input_file_string=' "inputs='+"'"
+    aprepro_part_name_string =' "parts='+"'"
+    for component in dictionary_of_parts:
+        aprepro_input_file_string = aprepro_input_file_string+ dictionary_of_parts[component]['step_filename']+','
+        aprepro_part_name_string = aprepro_part_name_string + component + ','
+
+    aprepro_input_file_string=aprepro_input_file_string[:-1]+"'" + '"'
+    aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
+
+
+    os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
+    print('trelis convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('/opt/Trelis-16.4/bin/trelis geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+
+    print('trelis h5m done')
+
+
+def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket_type):
+    #os.environ["CUBIT_PLUGIN_DIR"] ='/opt/Trelis-16.4/bin/plugins/svalinn/'
+    try:
+        os.makedirs(output_folder)
+    except:
+        pass
+    aprepro_output_file_string = ' "output_folder='+"'"+output_folder+"'"+'"'
+    aprepro_input_file_string=' "inputs='+"'"
+    aprepro_part_name_string =' "parts='+"'"
+    for component in dictionary_of_parts:
+        aprepro_input_file_string = aprepro_input_file_string+ dictionary_of_parts[component]['step_filename']+','
+        aprepro_part_name_string = aprepro_part_name_string + component + ','
+
+    aprepro_input_file_string=aprepro_input_file_string[:-1]+"'" + '"'
+    aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
+
+
+
+    print('trelis -nographics -batch convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+
+    print('trelis merged stl done')
+
+    if success == 0:
+        return True
+    else:
+        return False
+
 
 def find_common_bodies(chopper,chopped):
     common_parts=[]

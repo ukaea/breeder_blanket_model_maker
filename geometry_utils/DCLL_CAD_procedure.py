@@ -23,6 +23,8 @@ def DCLL_detailed_module(blanket_parameters_dict):
         output_folder = blanket_parameters_dict['output_folder']
         output_folder_step = output_folder + '/step'
         output_folder_stl = output_folder + '/stl'
+        output_folder_h5m = output_folder + '/h5m'
+        output_folder_merged_stl = output_folder + '/merged_stl'
         armour_thickness = blanket_parameters_dict['armour_thickness']
         first_wall_thickness = blanket_parameters_dict['first_wall_thickness']
         end_cap_thickness = blanket_parameters_dict['end_cap_thickness']
@@ -227,6 +229,11 @@ def DCLL_detailed_module(blanket_parameters_dict):
         prefix='_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
 
         save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
+
+
+        save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
+                                           output_folder=output_folder_merged_stl,
+                                           blanket_type=blanket_parameters_dict['blanket_type'])
 
         save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
 

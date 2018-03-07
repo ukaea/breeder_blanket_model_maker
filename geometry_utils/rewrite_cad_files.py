@@ -28,6 +28,21 @@ import Mesh
 import Draft
 import MeshPart
 from common_CAD_functions import *
+import collections
+from collections import OrderedDict
+
+#sys.path.append('/home/jshim/moab/lib/python2.7/site-packages/')
+
+#from pymoab import core
+
+
+def read_in_stl_files_and_save_as_h5m(read_file,write_file):
+
+    mbi = core.Core()
+
+    mbi.load_file(read_file)
+
+    mbi.write_file(write_file)
 
 def read_in_stl_files_and_resave(read_folder,write_folder):
     try:
@@ -47,7 +62,7 @@ def read_in_stl_files_and_resave(read_folder,write_folder):
             #Mesh.export(obj,os.path.join(write_folder,file))
             obj.write(os.path.join(write_folder,file))
 
-def read_in_stl_files_and_resave_as_compound(read_folder,write_folder):
+def read_in_stl_files_and_resave_as_single_step(read_folder,write_folder):
     try:
         os.mkdir(write_folder)
     except:
@@ -74,11 +89,35 @@ def read_in_stl_files_and_resave_as_compound(read_folder,write_folder):
     compound_obj=Part.makeCompound(list_of_solid_parts)
     compound_obj.exportStep(os.path.join(write_folder,file))
     
-def read_in_step_files_and_resave_seperated(read_folder,write_folder):
+def read_in_step_file_and_save_as_seperate_step_files(file,write_folder=''):
+
+    if file.endswith(".step") or  file.endswith(".stp"):
+        print('reading in ' ,os.path.join(file))
+        multipart_step = Part.read(os.path.join(file))
+        file_counter=1
+        for solid in multipart_step.Solids:
+            print(write_folder+'/'+file+str(file_counter))
+            solid.exportStep(os.path.join(write_folder,os.path.splitext(file)[0]+str(file_counter)+'.stp'))
+            file_counter=file_counter+1  
+                
+def read_in_step_files_and_save_as_seperate_step_files(read_folder,write_folder):
     try:
         os.mkdir(write_folder)
     except:
         print('error making folder')
+
+    if os.path.isfile(read_folder):
+        file = read_folder
+        if file.endswith(".step") or  file.endswith(".stp"):
+                    print('reading in ' ,os.path.join(read_folder, file))
+                    multipart_step = Part.read(file)
+                    file_counter=1
+                    for solid in multipart_step.Solids:
+                        print(write_folder+'/'+file+str(file_counter))
+                        solid.exportStep(write_folder+'/'+os.path.splitext(file)[0]+str(file_counter)+'.stp')
+                        file_counter=file_counter+1    
+        return True
+
     for file in os.listdir(read_folder):
         if file.endswith(".step") or  file.endswith(".stp"):
             print('reading in ' ,os.path.join(read_folder, file))
@@ -88,8 +127,9 @@ def read_in_step_files_and_resave_seperated(read_folder,write_folder):
                 print(write_folder+'/'+file+str(file_counter))
                 solid.exportStep(write_folder+'/'+os.path.splitext(file)[0]+str(file_counter)+'.stp')
                 file_counter=file_counter+1
+    return True
 
-def read_in_seperate_step_files_and_resave_as_one(read_folder,write_folder,prefix_required):
+def read_in_step_files_and_save_as_single_step(read_folder,write_folder,prefix_required):
     try:
         os.mkdir(write_folder)
     except:
@@ -108,7 +148,9 @@ def read_in_seperate_step_files_and_resave_as_one(read_folder,write_folder,prefi
 
     Part.makeCompound(list_of_all_solids).exportStep(os.path.join(write_folder,'grouped_'+prefix_required+'.step'))
 
-def read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder,ignore_files=['']):
+def read_in_step_files_and_save_as_seperate_stl_files(read_folder,write_folder,ignore_files=['']):
+
+
     try:
         os.mkdir(write_folder)
         print('making folder',write_folder)
@@ -174,12 +216,10 @@ def read_in_step_files_and_resave_as_seperate_stl_files(read_folder,write_folder
                         stl_filename= os.path.join(write_folder,os.path.splitext(file)[0]+'_'+str(file_counter)+'.stl')
                         #print('writing ',stl_filename)
                         solid_mesh.write(stl_filename)
-                        file_counter=file_counter+1 
+                        file_counter=file_counter+1
 
 
-
- 
-def read_in_step_files_and_resave_as_single_stl_files(read_folder,write_folder,ignore_files=['']):
+def read_in_step_files_and_save_as_single_stl_files(read_folder,write_folder,ignore_files=['']):
     list_of_solid_parts=[]
     try:
         os.mkdir(write_folder)
@@ -226,7 +266,6 @@ def read_in_system_arguments():
 
     return read_folder , write_folder,prefix_required
 
-
 def copy_stl_files(read_folder,write_folder,ignore_files=[]):
     #settings.input_folder + '/stl', output_folder_stl,
     list_of_files_copied=[]
@@ -239,8 +278,58 @@ def copy_stl_files(read_folder,write_folder,ignore_files=[]):
 
     return list_of_files_copied
 
+def find_facets(file):
+
+    multipart_step = Part.read(os.path.join(file))
+
+    solid_mesh = MeshPart.meshFromShape(multipart_step, LinearDeflection=1)
+    print(type(solid_mesh))
 
 
+    for f in solid_mesh.Facets: 
+        print f
+        print ''
+        print f.Points
+        print ''
+        print f.PointIndices
+        print ''
+        print ''
+
+    print(len(solid_mesh.Facets))
+
+    print('hi')
+
+
+# def save_components_as_conformal_stl(dictionary_of_parts,output_folder):
+#     try:
+#         os.makedirs(output_folder)
+#     except:
+#         pass
+#     #run external trelis script with list of step files as the argument
+#     #convert_step_files_to_h5m_with_trelis.py
+#
+#
+# def imprint_and_merge():
+#     # import "vov.stp" heal
+#     # group "mat:Blanket" add vol 1-4
+#     # scale volume all 0.1
+#     # imprint body all
+#     # merge tolerance 1.e-6
+#     # merge all
+#     # for command details see the help dagmc
+#     # export dagmc "filenamewithpath.h5m" faceteting_tolerance 1.e-4
+#     # then to visulise run moab convert
+#     # opt/moab/bin/mbconvert filenamewithpath.h5m filenamewithpath.stl
+#     # the stl's for each material can be output seperatly using the mbconvert -v flag
+#
+#
+#     pass
+
+
+
+#find_facets('armour_mod1.step')
+
+            #print('writing in ' ,os.path.join(read_folder, fil
 
 #read_in_step_files_and_resave_seperated("grouped_step_files","ungrouped_step_files")
 #if __name__ == "__main__":
