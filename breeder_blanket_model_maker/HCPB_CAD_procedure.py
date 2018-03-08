@@ -1,3 +1,4 @@
+
 import sys
 sys.dont_write_bytecode = True
 sys.path.append('/usr/lib/freecad-daily/lib/')
@@ -16,14 +17,13 @@ import Draft
 import MeshPart
 from common_CAD_functions import *
 
-def HCLL_detailed_module(blanket_parameters_dict):
+def HCPB_detailed_module(blanket_parameters_dict):
 
-      dictionary_of_parts=collections.defaultdict(dict)
-
+      #loads in parameters
       envelope_directory_filename = blanket_parameters_dict['envelope_filename']
       output_folder = blanket_parameters_dict['output_folder']
-      output_folder_step = output_folder+'/step'
-      output_folder_stl = output_folder+'/stl'
+      output_folder_step = output_folder + '/step'
+      output_folder_stl = output_folder + '/stl'
       output_folder_h5m = output_folder + '/h5m'
       output_folder_merged_stl = output_folder + '/merged_stl'
       armour_thickness = blanket_parameters_dict['armour_thickness']
@@ -37,7 +37,14 @@ def HCLL_detailed_module(blanket_parameters_dict):
       else:
           plasma = Part.makeTorus(9100, 2900)
 
-      envelope = Part.read(envelope_directory_filename)
+      try:
+        envelope = Part.read(envelope_directory_filename)
+      except:
+        print('failed to load envelope from ',envelope_directory_filename)
+        print('trying to load envelope from package directory')
+        path = os.path.abspath(__file__)
+        dir_path = os.path.dirname(path)
+        envelope = Part.read(os.path.join(dir_path,envelope_directory_filename))
 
       envelope_back_face = find_envelope_back_face(envelope, plasma)
 
@@ -61,9 +68,10 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
       filleted_envelope_back_face = find_envelope_back_face(filleted_envelope_solid, plasma)
 
-      filleted_envelope_front_face = find_envelope_front_face(filleted_envelope_solid, filleted_envelope_back_face)
+      filleted_envelope_front_face = find_envelope_front_face(filleted_envelope_solid,filleted_envelope_back_face)
 
-      filleted_envelope_front_face_id = envelope_front_face_id(wedge=filleted_envelope_solid, envelope_back_face=filleted_envelope_back_face)
+      filleted_envelope_front_face_id = envelope_front_face_id(wedge=filleted_envelope_solid,
+                                                                    envelope_back_face=filleted_envelope_back_face)
 
       end_cap_faces = find_end_cap_faces(faces_under_consideration=filleted_envelope_solid.Faces)
 
@@ -71,12 +79,10 @@ def HCLL_detailed_module(blanket_parameters_dict):
                                                                                         faces_not_in_first_wall=[filleted_envelope_back_face] +end_cap_faces,
                                                                                         filleted_envelope=filleted_envelope_solid,
                                                                                         front_face=envelope_front_face)
+
+      dictionary_of_parts = collections.defaultdict(dict)
+
       dictionary_of_parts['armour']['part'] = [first_wall_armour]
-
-      armour_removed_envelope_back_face = find_envelope_back_face(envelope_removed_armour, plasma)
-
-      armour_removed_envelope_front_face = find_envelope_front_face(envelope_removed_armour,
-                                                                         armour_removed_envelope_back_face)
 
       envelope_removed_armour_end_cap_faces = find_end_cap_faces(faces_under_consideration=envelope_removed_armour.Faces)
 
@@ -93,11 +99,9 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
       dictionary_of_parts['first_wall_homogenised']['part'] = [first_wall]
 
-      first_wall_removed_envelope_back_face = find_envelope_back_face(first_wall_removed_envelope,
-                                                                           plasma)
+      first_wall_removed_envelope_back_face = find_envelope_back_face(first_wall_removed_envelope, plasma)
 
-      first_wall_removed_envelope_front_face = find_envelope_front_face(first_wall_removed_envelope,
-                                                                             first_wall_removed_envelope_back_face)
+      first_wall_removed_envelope_front_face = find_envelope_front_face(first_wall_removed_envelope,first_wall_removed_envelope_back_face)
 
       first_wall_removed_envelope_midpoint = find_front_face_midpoint(first_wall_removed_envelope_front_face)
 
@@ -106,10 +110,6 @@ def HCLL_detailed_module(blanket_parameters_dict):
           cooling_channel_offset_from_first_wall = blanket_parameters_dict['cooling_channel_offset_from_first_wall']
 
           first_wall_channel_radial_mm = blanket_parameters_dict['first_wall_channel_radial_mm']
-
-          # first_wall_front_layer, first_wall_removed_envelope_temp1 = chop_off_first_wall(faces_not_in_first_wall=[filleted_envelope_back_face] + end_cap_faces,
-          #                                                                                     thickness=cooling_channel_offset_from_first_wall,
-          #                                                                                     filleted_envelope=filleted_envelope)
 
           first_wall_front_layer, first_wall_removed_envelope_temp1 = chop_off_first_wall(faces_not_in_first_wall=[armour_removed_envelope_back_face] + envelope_removed_armour_end_cap_faces,
                                                                                                     thickness=cooling_channel_offset_from_first_wall,
@@ -147,6 +147,8 @@ def HCLL_detailed_module(blanket_parameters_dict):
       back_walls, envelope_removed_back_wall = chop_off_back_walls(back_face=back_face_envelope_removed_caps,
                                                                              remaining_shapes=envelope_removed_endcaps,
                                                                              back_walls_thicknesses=back_walls_thicknesses)
+
+
       for i, key in enumerate(blanket_parameters_dict['back_walls_thicknesses']):
           dictionary_of_parts[key]['part'] = [back_walls[i]]
 
@@ -155,18 +157,17 @@ def HCLL_detailed_module(blanket_parameters_dict):
       envelope_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
                                                               poloidal_segmentations=poloidal_segmentations,
                                                               envelope=envelope_removed_back_wall,
-                                                              method='HCLL',top_bottom_edges=front_face_torodial_edges_to_fillet,
+                                                              method='HCPB',top_bottom_edges=front_face_torodial_edges_to_fillet,
                                                               front_face=envelope_front_face)
 
-      lithium_lead = envelope_poloidally_segmented[0]
+      neutron_multiplier = envelope_poloidally_segmented[0]
 
-      cooling_plate = envelope_poloidally_segmented[1]
+      cooling_plate = envelope_poloidally_segmented[1] + envelope_poloidally_segmented[3]
+
+      breeder_material = envelope_poloidally_segmented[2]
 
       for i, key in enumerate(blanket_parameters_dict['poloidal_segmentations']):
-          if dictionary_of_parts[key]:
-            dictionary_of_parts[key]['part'] = dictionary_of_parts[key]['part']+ envelope_poloidally_segmented[i]
-          else:
-            dictionary_of_parts[key]['part'] = envelope_poloidally_segmented[i]
+          dictionary_of_parts[key]['part'] = envelope_poloidally_segmented[i]
 
       cylinder_slice = make_cylinder_slice(10)
 
@@ -174,14 +175,13 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
       save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
 
-      save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
-                                         output_folder=output_folder_merged_stl,
-                                         blanket_type=blanket_parameters_dict['blanket_type'])
+
+
+      save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts, output_folder=output_folder_merged_stl,blanket_type=blanket_parameters_dict['blanket_type'])
 
       save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
 
       save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
-
 
 
       return dictionary_of_parts

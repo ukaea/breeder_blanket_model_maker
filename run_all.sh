@@ -1,4 +1,4 @@
-python make_DCLL_CAD_models.py
-python make_HCLL_CAD_models.py
-python make_HCPB_CAD_models.py
-python make_WCLL_CAD_modles.py
+python examples/make_example_DCLL_model.py
+python examples/make_example_HCLL_model.py
+python examples/make_example_HCPB_model.py
+python examples/make_example_WCLL_model.py

@@ -16,13 +16,13 @@ import Draft
 import MeshPart
 from common_CAD_functions import *
 
-def WCLL_detailed_module(blanket_parameters_dict):
+def DCLL_detailed_module(blanket_parameters_dict):
 
-
+        #loads in parameters
         envelope_directory_filename = blanket_parameters_dict['envelope_filename']
         output_folder = blanket_parameters_dict['output_folder']
-        output_folder_step = output_folder+'/step'
-        output_folder_stl = output_folder+'/stl'
+        output_folder_step = output_folder + '/step'
+        output_folder_stl = output_folder + '/stl'
         output_folder_h5m = output_folder + '/h5m'
         output_folder_merged_stl = output_folder + '/merged_stl'
         armour_thickness = blanket_parameters_dict['armour_thickness']
@@ -36,7 +36,14 @@ def WCLL_detailed_module(blanket_parameters_dict):
         else:
             plasma = Part.makeTorus(9100, 2900)
 
-        envelope = Part.read(envelope_directory_filename)
+        try:
+          envelope = Part.read(envelope_directory_filename)
+        except:
+          print('failed to load envelope from ',envelope_directory_filename)
+          print('trying to load envelope from package directory')
+          path = os.path.abspath(__file__)
+          dir_path = os.path.dirname(path)
+          envelope = Part.read(os.path.join(dir_path,envelope_directory_filename))
 
         envelope_back_face = find_envelope_back_face(envelope, plasma)
 
@@ -52,29 +59,25 @@ def WCLL_detailed_module(blanket_parameters_dict):
 
         front_face_torodial_edges_to_fillet = find_front_face_torodial_edges_to_fillet(envelope_front_face.Edges)
 
-        first_wall_poloidal_fillet_radius = blanket_parameters_dict['first_wall_poloidal_fillet_radius']
 
-        filleted_envelope_solid = filleted_envelope(fillet_radius=first_wall_poloidal_fillet_radius,
-                                                   edges=front_face_polodial_edges_to_fillet,
+        first_wall_toroidal_fillet_radius = blanket_parameters_dict['first_wall_toroidal_fillet_radius']
+        filleted_envelope_solid = filleted_envelope(fillet_radius=first_wall_toroidal_fillet_radius,
+                                                   edges=front_face_torodial_edges_to_fillet,
                                                    envelope=envelope)
 
         filleted_envelope_back_face = find_envelope_back_face(filleted_envelope_solid, plasma)
-        filleted_envelope_front_face = find_envelope_front_face(filleted_envelope_solid,
-                                                                     filleted_envelope_back_face)
+
+        filleted_envelope_front_face = find_envelope_front_face(filleted_envelope_solid,filleted_envelope_back_face)
 
         filleted_envelope_front_face_id = envelope_front_face_id(wedge=filleted_envelope_solid,
                                                                       envelope_back_face=filleted_envelope_back_face)
 
         end_cap_faces = find_end_cap_faces(faces_under_consideration=filleted_envelope_solid.Faces)
 
-        first_wall_armour, envelope_removed_armour = chop_off_first_wall_armour(armour_thickness=armour_thickness,
-                                                                                          faces_not_in_first_wall=[filleted_envelope_back_face] +end_cap_faces,
-                                                                                          filleted_envelope=filleted_envelope_solid,
-                                                                                          front_face=envelope_front_face)
-
-        # armour_removed_envelope_back_face = find_envelope_back_face(envelope_removed_armour, plasma)
-        # armour_removed_envelope_front_face = find_envelope_front_face(envelope_removed_armour,
-        #                                                                    armour_removed_envelope_back_face)
+        first_wall_armour, envelope_removed_armour = chop_off_first_wall_armour(armour_thickness = armour_thickness,
+                                                                                     faces_not_in_first_wall = [filleted_envelope_back_face] + end_cap_faces,
+                                                                                     filleted_envelope = filleted_envelope_solid,
+                                                                                     front_face = envelope_front_face)
 
         dictionary_of_parts = collections.defaultdict(dict)
 
@@ -96,15 +99,17 @@ def WCLL_detailed_module(blanket_parameters_dict):
 
         first_wall_removed_envelope_back_face = find_envelope_back_face(first_wall_removed_envelope,
                                                                              plasma)
+
         first_wall_removed_envelope_front_face = find_envelope_front_face(first_wall_removed_envelope,
                                                                                first_wall_removed_envelope_back_face)
-        first_wall_removed_envelope_midpoint = find_front_face_midpoint(
-            first_wall_removed_envelope_front_face)
 
-        if 'cooling_channel_offset_from_first_wall' in blanket_parameters_dict and 'first_wall_channel_radial_mm' in blanket_parameters_dict and 'first_wall_channel_poloidal_segmentations' in blanket_parameters_dict:
-            print('calculating first wall cooling pipes')
+        first_wall_removed_envelope_midpoint = find_front_face_midpoint(first_wall_removed_envelope_front_face)
+
+
+        if 'cooling_channel_offset_from_first_wall' in blanket_parameters_dict and 'first_wall_channel_radial_mm' in blanket_parameters_dict and 'first_wall_channel_toroidal_segmentations' in blanket_parameters_dict:
 
             cooling_channel_offset_from_first_wall = blanket_parameters_dict['cooling_channel_offset_from_first_wall']
+
             first_wall_channel_radial_mm = blanket_parameters_dict['first_wall_channel_radial_mm']
 
             first_wall_front_layer, first_wall_removed_envelope_temp1 = chop_off_first_wall(faces_not_in_first_wall=[armour_removed_envelope_back_face] + envelope_removed_armour_end_cap_faces,
@@ -116,26 +121,20 @@ def WCLL_detailed_module(blanket_parameters_dict):
                                                                                                      filleted_envelope=envelope_removed_armour)
 
             first_wall_middle_layer = first_wall.common(first_wall_back_layer).cut(first_wall_front_layer)
+
             first_wall_back_layer = first_wall.cut(first_wall_back_layer)
 
-            dictionary_of_parts['first_wall_material']['part'] = [first_wall_front_layer, first_wall_back_layer]
+            dictionary_of_parts['first_wall_material']['part']=[first_wall_front_layer,first_wall_back_layer]
 
-            first_wall_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
-                                                                      poloidal_segmentations=blanket_parameters_dict['first_wall_channel_poloidal_segmentations'],
+            first_wall_toroidally_segmented = chop_up_toroidally(toroidal_segmentations =blanket_parameters_dict['first_wall_channel_toroidal_segmentations'],
                                                                       envelope=first_wall_middle_layer,
-                                                                      method='first_wall',
-                                                                      top_bottom_edges=front_face_torodial_edges_to_fillet,
-                                                                      front_face=envelope_front_face)
+                                                                      front_face= first_wall_removed_envelope_front_face,
+                                                                      front_face_torodial_edges_to_fillet=front_face_torodial_edges_to_fillet)
 
+            for i, key in enumerate(blanket_parameters_dict['first_wall_channel_toroidal_segmentations']):
+                dictionary_of_parts[key]['part'] = first_wall_toroidally_segmented[i]
 
-            for i, key in enumerate(blanket_parameters_dict['first_wall_channel_poloidal_segmentations']):
-                dictionary_of_parts[key]['part'] = first_wall_poloidally_segmented[i]
-
-            dictionary_of_parts['first_wall_material']['part'] = dictionary_of_parts['first_wall_material'][
-                                                                          'part'] + [first_wall_front_layer,
-                                                                                     first_wall_back_layer]
-
-
+            dictionary_of_parts['first_wall_material']['part'] = dictionary_of_parts['first_wall_material']['part'] + [first_wall_front_layer,first_wall_back_layer]
 
         end_caps, envelope_removed_endcaps = chop_of_end_caps(end_cap_faces, end_cap_thickness,
                                                                             first_wall_removed_envelope)
@@ -151,14 +150,6 @@ def WCLL_detailed_module(blanket_parameters_dict):
         for i, key in enumerate(blanket_parameters_dict['back_walls_thicknesses']):
             dictionary_of_parts[key]['part'] = [back_walls[i]]
 
-        poloidal_segmentations = blanket_parameters_dict['poloidal_segmentations']
-
-        envelope_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
-                                                                poloidal_segmentations=poloidal_segmentations,
-                                                                envelope=envelope_removed_back_wall,
-                                                                method='WCLL',top_bottom_edges=front_face_torodial_edges_to_fillet,
-                                                                front_face=envelope_front_face)
-
         toroidal_segmentations = blanket_parameters_dict['toroidal_segmentations']
 
         envelope_toroidally_segmented = chop_up_toroidally(toroidal_segmentations=blanket_parameters_dict['toroidal_segmentations'],
@@ -166,39 +157,79 @@ def WCLL_detailed_module(blanket_parameters_dict):
                                                                 front_face = first_wall_removed_envelope_front_face,
                                                                 front_face_torodial_edges_to_fillet = front_face_torodial_edges_to_fillet)
 
+        back_walls_removed_envelope_back_face = find_envelope_back_face(envelope_removed_back_wall, plasma)
+
+        back_walls_removed_envelope_front_face = find_envelope_front_face(envelope_removed_back_wall, back_walls_removed_envelope_back_face)
+
+        back_wall_removed_envelope_radial_depth = back_walls_removed_envelope_back_face.distToShape(back_walls_removed_envelope_front_face)[0]
 
         radial_segmentations = blanket_parameters_dict['radial_segmentations']
 
-        envelope_radially_segmented = chop_up_envelope_zone_radially(radial_segmentations=radial_segmentations,
-                                                                          number_required=1,
-                                                                          front_face=first_wall_removed_envelope_front_face,
-                                                                          envelope=envelope_removed_back_wall)
+        envelope_radially_segmented = chop_up_envelope_zone_radially_with_adjustable_rear_division(front_face=first_wall_removed_envelope_front_face,
+                                                                                                        radial_segmentations=radial_segmentations,
+                                                                                                        envelope=envelope_removed_back_wall,
+                                                                                                        envelope_radial_depth=back_wall_removed_envelope_radial_depth,
+                                                                                                        thinnest_two_layer_blanket=1500)
 
-        list_of_plates_for_cutting = envelope_poloidally_segmented[0][2::4] + envelope_poloidally_segmented[0][3::4]
+        top_and_bottom_faces_of_original_envelope = find_poloidal_upper_and_lower_faces(front_face = envelope_front_face,
+                                                                                             back_face = envelope_back_face,
+                                                                                             envelope = envelope,
+                                                                                             envelope_front_face_id=original_envelope_front_face_id,
+                                                                                             envelope_back_face_id=envelope_back_face_id)
 
-        additional_lithium_lead, reduced_solids = find_common_bodies(envelope_radially_segmented[0],
-                                                                                    list_of_plates_for_cutting)
+        poloidal_upper_offset_for_breeder_channel = blanket_parameters_dict['poloidal_upper_offset_for_breeder_channel']
 
-        envelope_poloidally_segmented[0] = reduced_solids + envelope_poloidally_segmented[0][0::4] + \
-                                                envelope_poloidally_segmented[0][1::4]
+        poloidal_lower_offset_for_breeder_channel = blanket_parameters_dict['poloidal_lower_offset_for_breeder_channel']
 
-        envelope_poloidally_segmented[1] = additional_lithium_lead + envelope_poloidally_segmented[1]
+        breeder_zone_lithium_cutter_upper = exstrude_and_cut_solids(list_of_distances=[armour_thickness+first_wall_thickness+poloidal_upper_offset_for_breeder_channel],face=top_and_bottom_faces_of_original_envelope[0],envelope=envelope_removed_back_wall)
 
-        lithium_lead = []
-        for poloidally_ll in envelope_poloidally_segmented[1]:
+        poloidal_lower_offset_for_breeder_channel = blanket_parameters_dict['poloidal_lower_offset_for_breeder_channel']
+
+        breeder_zone_lithium_cutter_lower = exstrude_and_cut_solids(list_of_distances=[armour_thickness+first_wall_thickness+poloidal_lower_offset_for_breeder_channel],face=top_and_bottom_faces_of_original_envelope[1],envelope=envelope_removed_back_wall)
+
+        poloidal_upper_offset_for_plate = blanket_parameters_dict['radial_segmentations'][1]
+
+        upper_plate = exstrude_and_cut_solids(list_of_distances=[armour_thickness + first_wall_thickness + poloidal_upper_offset_for_plate + poloidal_upper_offset_for_breeder_channel],face= top_and_bottom_faces_of_original_envelope[0],envelope=envelope_removed_back_wall)[0]
+
+        upper_plate = upper_plate.cut(breeder_zone_lithium_cutter_upper)
+
+        upper_plate = upper_plate.cut(envelope_radially_segmented[0][0])
+
+        additional_lithium_lead_upper,reduced_solids_upper = find_common_bodies(breeder_zone_lithium_cutter_upper,envelope_radially_segmented[1])
+
+        additional_lithium_lead_lower,reduced_solids_lower = find_common_bodies(breeder_zone_lithium_cutter_lower,envelope_radially_segmented[1])
+
+        envelope_radially_segmented[0]= envelope_radially_segmented[0] +additional_lithium_lead_upper + additional_lithium_lead_lower
+
+        lithium_lead =  []
+        for radial_ll in envelope_radially_segmented[0]:
             for toroidally_ll in envelope_toroidally_segmented[0]:
-                lithium_lead.append(poloidally_ll.common(toroidally_ll))
+                lithium_lead.append((radial_ll.common(toroidally_ll)).cut(upper_plate))
 
         structural_plate = []
-        for poloidally_div in envelope_poloidally_segmented[0]:
-            for toroidal_div in envelope_toroidally_segmented[1]:
-                poloidally_div = poloidally_div.cut(toroidal_div)
-            structural_plate.append(poloidally_div)
-        structural_plate = structural_plate + envelope_toroidally_segmented[1]
+        for radial_plate in envelope_radially_segmented[1]:
+            #print('vol=',radial_plate.Volume)
+            for chopper in additional_lithium_lead_upper:
+                radial_plate=radial_plate.cut(chopper)
+                #print('    vol=', radial_plate.Volume)
+            for chopper in additional_lithium_lead_lower:
+                radial_plate=radial_plate.cut(chopper)
+                #print('    vol=', radial_plate.Volume)
+            radial_plate=radial_plate.cut(upper_plate)
+            #print('')
+            for toroidal_plate in envelope_toroidally_segmented[1]:
+                upper_plate=upper_plate.cut(toroidal_plate)
+                radial_plate = radial_plate.cut(toroidal_plate)
 
-        available_breezer_zone_materials = [lithium_lead, structural_plate]
-        for i, key in enumerate(blanket_parameters_dict['poloidal_segmentations']):
+            structural_plate.append(radial_plate)
+        structural_plate=structural_plate+envelope_toroidally_segmented[1]+upper_plate.Solids
+
+
+        available_breezer_zone_materials = [lithium_lead,structural_plate]
+        for i,key in enumerate(blanket_parameters_dict['toroidal_segmentations']):
+
             dictionary_of_parts[key]['part'] = available_breezer_zone_materials[i]
+
 
         cylinder_slice = make_cylinder_slice(10)
 
@@ -206,15 +237,14 @@ def WCLL_detailed_module(blanket_parameters_dict):
 
         save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
 
+
         save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
                                            output_folder=output_folder_merged_stl,
                                            blanket_type=blanket_parameters_dict['blanket_type'])
 
-
         save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
 
         save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
-
 
 
         return dictionary_of_parts

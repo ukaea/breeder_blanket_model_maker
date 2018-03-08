@@ -110,12 +110,19 @@ def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
 
 
     os.system('rm *.jou')
-    os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
+
+    path = os.path.abspath(__file__)
+    dir_path = os.path.dirname(path)
+    path_and_file =os.path.join(dir_path,'convert_step_files_to_h5m_with_trelis.py')
+
+    #os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
+
     print('trelis convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     print('trelis h5m done')
+    os.system('rm *.jou')
 
 
 def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket_type):
@@ -136,12 +143,17 @@ def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket
 
 
     os.system('rm *.jou')
-    print('trelis -nographics -batch convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+
+    path = os.path.abspath(__file__)
+    dir_path = os.path.dirname(path)
+    path_and_file =os.path.join(dir_path,'convert_step_files_to_stl_with_trelis.py')
+
+    print('trelis -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     print('trelis merged stl done')
-
+    os.system('rm *.jou')
     if success == 0:
         return True
     else:

@@ -3,7 +3,7 @@ sys.dont_write_bytecode = True
 from collections import OrderedDict
 import multiprocessing
 
-from geometry_utils.WCLL_CAD_procedure import *
+from breeder_blanket_model_maker import *
 
 def generate_CAD_model(blanket_type):
 
@@ -44,9 +44,9 @@ def generate_CAD_model(blanket_type):
             'toroidal_segmentations' : toroidal_segmentations_ordered_dict,
             'radial_segmentations' : [150],
 
-            'cooling_channel_offset_from_first_wall': 3,
-            'first_wall_channel_radial_mm': 13.5,
-            'first_wall_channel_poloidal_segmentations': first_wall_channel_poloidal_segmentations_dict,  # 13.5,4.5
+            # 'cooling_channel_offset_from_first_wall': 3,
+            # 'first_wall_channel_radial_mm': 13.5,
+            # 'first_wall_channel_poloidal_segmentations': first_wall_channel_poloidal_segmentations_dict,  # 13.5,4.5
 
         }
 
