@@ -18,10 +18,9 @@ __pycache__/
 
 **/.idea/tasks.xml
 
-detailed_DCLL/
-detailed_HCLL/
-detailed_WCLL/
-detailed_HCPB/
+buid/
+
+upload.sh
 
 *.jou
 *.log

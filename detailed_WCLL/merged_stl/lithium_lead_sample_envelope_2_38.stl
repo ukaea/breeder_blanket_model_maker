@@ -1,0 +1,86 @@
+solid Open CASCADE STEP translator 7.1 1.38@A
+  facet normal -9.665182e-01 -1.129698e-01 -9.665182e-01
+    outer loop
+      vertex 9.305243e+03 7.685587e+02 5.108017e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.302341e+03 7.933896e+02 5.108017e+03
+    endloop
+  endfacet
+  facet normal -9.665182e-01 -1.129698e-01 -9.665182e-01
+    outer loop
+      vertex 9.302341e+03 7.933896e+02 5.108017e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.336666e+03 7.974016e+02 5.253982e+03
+    endloop
+  endfacet
+  facet normal -2.288339e-01 -2.674680e-02 -2.288339e-01
+    outer loop
+      vertex 9.302341e+03 7.933896e+02 5.108017e+03
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+      vertex 9.305243e+03 7.685587e+02 5.108017e+03
+    endloop
+  endfacet
+  facet normal -2.288339e-01 -2.674680e-02 -2.288339e-01
+    outer loop
+      vertex 9.305243e+03 7.685587e+02 5.108017e+03
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+      vertex 9.329406e+03 7.713829e+02 5.102257e+03
+    endloop
+  endfacet
+  facet normal -1.160929e-01 9.932384e-01 -1.160929e-01
+    outer loop
+      vertex 9.302341e+03 7.933896e+02 5.108017e+03
+      vertex 9.336666e+03 7.974016e+02 5.253982e+03
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+    endloop
+  endfacet
+  facet normal -1.160929e-01 9.932384e-01 -1.160929e-01
+    outer loop
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+      vertex 9.336666e+03 7.974016e+02 5.253982e+03
+      vertex 9.360829e+03 8.002259e+02 5.248222e+03
+    endloop
+  endfacet
+  facet normal 2.288339e-01 2.674680e-02 2.288339e-01
+    outer loop
+      vertex 9.336666e+03 7.974016e+02 5.253982e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.360829e+03 8.002259e+02 5.248222e+03
+    endloop
+  endfacet
+  facet normal 2.288339e-01 2.674680e-02 2.288339e-01
+    outer loop
+      vertex 9.360829e+03 8.002259e+02 5.248222e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.363731e+03 7.753949e+02 5.248222e+03
+    endloop
+  endfacet
+  facet normal 1.160929e-01 -9.932384e-01 1.160929e-01
+    outer loop
+      vertex 9.363731e+03 7.753949e+02 5.248222e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.329406e+03 7.713829e+02 5.102257e+03
+    endloop
+  endfacet
+  facet normal 1.160929e-01 -9.932384e-01 1.160929e-01
+    outer loop
+      vertex 9.329406e+03 7.713829e+02 5.102257e+03
+      vertex 9.339568e+03 7.725707e+02 5.253982e+03
+      vertex 9.305243e+03 7.685587e+02 5.108017e+03
+    endloop
+  endfacet
+  facet normal 9.665182e-01 1.129698e-01 9.665182e-01
+    outer loop
+      vertex 9.360829e+03 8.002259e+02 5.248222e+03
+      vertex 9.363731e+03 7.753949e+02 5.248222e+03
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+    endloop
+  endfacet
+  facet normal 9.665182e-01 1.129698e-01 9.665182e-01
+    outer loop
+      vertex 9.326504e+03 7.962139e+02 5.102257e+03
+      vertex 9.363731e+03 7.753949e+02 5.248222e+03
+      vertex 9.329406e+03 7.713829e+02 5.102257e+03
+    endloop
+  endfacet
+endsolid Open CASCADE STEP translator 7.1 1.38@A
