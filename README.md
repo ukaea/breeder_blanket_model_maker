@@ -7,24 +7,26 @@
 - [Design goals](#design-goals)
 - [Features](#features)
 - [Installation](#installation)
+- [Installation of dependencies](#installation-of-dependencies)
 - [Getting started](#getting-started)
-- [Making HCPB blankets](#making-isotopes)
-- [Making HCLL blankets](#making-elements)
-- [Making WCLL blankets](#making-compounds)
-- [Making DCLL blankets](#making-materials)
+- [Making HCPB blankets](#making-hcpb-blankets)
+- [Making HCLL blankets](#making-hcll-blankets)
+- [Making WCLL blankets](#making-wcll-blankets)
+- [Making DCLL blankets](#making-dcll-blankets)
 - [Todo](#todo)
 
-# Design goals
+# <a name="design-goals"></a>Design Goals
 
 Breeder_blanket_model_maker is a parametric 3D geometry maker for creating detailed CAD designs of breeder blankets. The main goals of the software are:
   - Automate the process of creating different blanket models
   - Accelerate the use of parametric design in fusion
   - Ease the process of optimising blanket designs across disciplines
 
-# Features
+# <a name="features"></a>Features
+
   - Create detailed parametric HCPB, HCLL and WCLL blanket designs
   - Import a blanket envelope model and start forming parts from it
-  - Export geometries of different components in STEP and STL format
+  - Export geometries of different components in STEP, STL and h5m format
   - Export first wall armour with your specified thickness
   - Export a first wall with a specified thickness and optional cooling channels
   - Export end caps with a specified thickness
@@ -33,7 +35,7 @@ Breeder_blanket_model_maker is a parametric 3D geometry maker for creating detai
   - Export radially segmented breeder zones with uniform or repeating structures
   - Export toroidally segmented breeder zones with uniform or repeating structures
 
-# Installation
+# <a name="installation"></a>Installation
 
 - install the package using pip
 ```sh
@@ -46,8 +48,7 @@ $ git clone git@github.com:ukaea/breeder_blanket_model_maker.git
 $ cd breeder_blanket_model_maker
 $ python setup.py install
 ```
-
-### Installation of dependencies
+### <a name="installation-of-dependencies"></a>Installation of dependencies
 
 Breeder_blanket_model_maker relies on a number dependencies of to work properly:
 * [FreeCAD](https://www.freecadweb.org) -  a fully scriptable open source parametric 3D modeler
@@ -85,8 +86,7 @@ $ python get-pip.py
 
 Installation of Trelis is best described on the [CSimSoft website](http://www.csimsoft.com/). The DAGMC Trelis plugin is also required and available on the [DAGMC website](https://svalinn.github.io/DAGMC/install/plugin.html)  
 
-
-# Getting started
+# <a name="getting-started"></a>Getting started
 
 In general to make a detailed breeder blanket you simply import the breeder_blanket_model_maker decide upon the dimentions of various components and provide a blanket envelope. The following code is incomplete but provides a skeleton example.
 
@@ -110,7 +110,7 @@ Two example blanket envelopes are provided with the package for users to experim
 
 
 
-### Making HCPB blankets
+### <a name="making-hcpb-blankets"></a>Making HCPB blankets
 
 To make a Helium Cooled Pebble Bed Blanket (HCPB) the package must be imported. The envelope filename must be specified, here we use one of the example envelopes. The output folder for generated STL, STEP and h5m files must be specified. The dimentions of various componets must also be stated. The order of the back walls and poloidal segmentations is important so and orderedDict type has been used (Python 2 dones not presever order of dictionaries). Here is an example input:
 
@@ -144,18 +144,18 @@ detailed_blanket(blanket_geometry_parameters)
 ```
 Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
 
-![sample_envelope_2](images/HCPB_small.png)
+<a name="images/HCPB.pdf">![sample_envelope_2](images/HCPB_small.png)</a>
 
-Additional detail can be added by uncommenting *cooling_channel_offset_from_first_wall*,*first_wall_channel_radial_mm* and *first_wall_channel_poloidal_segmentations* from the above example.
+Additional detail can be added by uncommenting *cooling_channel_offset_from_first_wall*, *first_wall_channel_radial_mm* and *first_wall_channel_poloidal_segmentations* from the above example.
 
 
 
-### Making HCLL blankets
+### <a name="making-hcll-blankets"></a>Making HCLL blankets
+
+Helium Cooled Liqiuth Lead (HCLL) blankets take similar input parameters to the previous HCPB example. Again the first wall cooling channels are commented out on this example but they can be uncomment for additional detail.
 
 ```python
-
 blanket_geometry_parameters =  {
-
     'blanket_type' : 'HCLL',
     'envelope_filename' : 'sample_envelope_1.step',,
     'output_folder' : 'detailed_HCLL',
@@ -179,33 +179,16 @@ blanket_geometry_parameters =  {
 
 detailed_blanket(blanket_geometry_parameters)
 ```
+Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
 
+<a name="images/HCLL.pdf">![sample_envelope_2](images/HCLL_small.png)</a>
 
-### Making WCLL blankets
+### <a name="making-wcll-blankets"></a>Making WCLL blankets
 
-To make a basic Helium Cooled Pebble Bed breeder blanket you simply import the breeder_blanket_model_maker decide upon the dimentions of various components and provide a blanket envelope.
+To make a Water Cooled Lithium Lead (WCLL) blanket additional parameters are need *toroidal_segmentations* and *radial_segmentations* are needed. Radial segmentation is the offset from the first wall that every other structural plate is cut with.
 
 ```python
 from breeder_blanket_model_maker import *
-
-back_walls_thicknesses_ordered_dict=OrderedDict()  #these are special ordereddict types required in python 2.7 but in python 3.6 onwards dictionaries are ordered by default, sadly freecad is not yet avaialbe in python 3
-back_walls_thicknesses_ordered_dict['back_wall_1']=15
-back_walls_thicknesses_ordered_dict['back_wall_2']=30
-back_walls_thicknesses_ordered_dict['back_wall_3']=15
-back_walls_thicknesses_ordered_dict['back_wall_4']=30
-back_walls_thicknesses_ordered_dict['back_wall_5']=15
-
-poloidal_segmentations_ordered_dict=OrderedDict()
-poloidal_segmentations_ordered_dict['lithium_lead']=25
-poloidal_segmentations_ordered_dict['structural_plate']=35
-
-toroidal_segmentations_ordered_dict=OrderedDict()
-toroidal_segmentations_ordered_dict['lithium_lead']=25
-toroidal_segmentations_ordered_dict['structural_plate']=35
-
-first_wall_channel_poloidal_segmentations_dict=OrderedDict()
-first_wall_channel_poloidal_segmentations_dict['first_wall_material']=13.5
-first_wall_channel_poloidal_segmentations_dict['first_wall_coolant']=4.5
 
 blanket_geometry_parameters =  {
 
@@ -216,25 +199,69 @@ blanket_geometry_parameters =  {
     'armour_thickness' : 2,
     'first_wall_thickness' : 25,
     'end_cap_thickness' : 25,
-    'back_walls_thicknesses' : back_walls_thicknesses_ordered_dict,
-    'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
-    'toroidal_segmentations' : toroidal_segmentations_ordered_dict,
+    'back_walls_thicknesses' : OrderedDict({'back_wall_1':15,
+                                            'back_wall_2':30,
+                                            'back_wall_3':15,
+                                            'back_wall_4':30,
+                                            'back_wall_5':15}),
+    'poloidal_segmentations' : OrderedDict({'lithium_lead':25,
+                                            'structural_plate':5}),
+    'toroidal_segmentations' : OrderedDict({'lithium_lead':25,
+                                            'structural_plate':5}),
     'radial_segmentations' : [150],
+}
+
+detailed_module(blanket_geometry_parameters)
+```
+Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+
+<a name="images/WCLL.pdf">![sample_envelope_2](images/WCLL_small.png)</a>
+
+### <a name="making-dcll-blankets"></a>Making DCLL blankets
+
+To make the Duel Cooled Lithium Lead (DCLL) additional parmenters are needed. *poloidal_upper_offset_for_breeder_channel* and *poloidal_lower_offset_for_breeder_channel* are the space provided for upper and lower lead flow channels.
+
+```python
+from breeder_blanket_model_maker import *
+
+blanket_geometry_parameters =  {
+
+    'blanket_type' : 'DCLL',
+    'envelope_filename' : 'sample_envelope_1.step',
+    'output_folder' : 'detailed_'+blanket_type,
+    'first_wall_toroidal_fillet_radius':50,
+    'armour_thickness':2,
+    'first_wall_thickness':25,
+    'end_cap_thickness':25,
+    'back_walls_thicknesses':OrderedDict({'back_wall_1':20,
+                                            'back_wall_2':10,
+                                            'back_helium_1':45,
+                                            'back_wall_3':10,
+                                            'back_helium_2':45,
+                                            'back_wall_4':10,
+                                            'back_wall_5':20}),
+    'toroidal_segmentations' : OrderedDict({'lithium_lead':25,
+                                            'structural_plate':5}),
+    'radial_segmentations':[250, 15],
+    'poloidal_upper_offset_for_breeder_channel':150,
+    'poloidal_lower_offset_for_breeder_channel':150,
+
+    # 'cooling_channel_offset_from_first_wall': 3,
+    # 'first_wall_channel_radial_mm': 13.5,
+    # 'first_wall_channel_toroidal_segmentations': first_wall_channel_toroidal_segmentations_dict,  # 13.5,4.5
 
 }
-WCLL_detailed_module(blanket_geometry_parameters)
+
+detailed_module(blanket_geometry_parameters)
 ```
+Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+
+<a name="images/DCLL.pdf">![sample_envelope_2](images/DCLL_small.png)</a>
 
 
-
-### Making DCLL blankets
-
-### Todos
+### <a name="todo"></a>Todo
+ - Hook up Travic CI
  - Write MORE Tests
  - Upload tested source code
- - Write user documentation  
- - Write description of methods used to segment (nearly finished)
- - Combine with materials database
- - Generate neutronics output file for tritium production and volumetric heating tally
- - Make a GUI
+ - Write better user documentation  
  - Generate unstrucutred mesh of geometry
