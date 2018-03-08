@@ -18,8 +18,9 @@ __pycache__/
 
 **/.idea/tasks.xml
 
-buid/
-buid/lib.linux-x86_64-2.7
+build/
+
+build/lib.linux-x86_64-2.7
 
 upload.sh
 
