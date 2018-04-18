@@ -19,6 +19,7 @@
   #       # - lcov
   #       - freecad-daily 
   script:
+    - export PYTHONPATH=$PYTHONPATH:/usr/lib/freecad/lib
     #- pip3 install neutronics_material_maker
     - python setup.py test
     #- pytest
