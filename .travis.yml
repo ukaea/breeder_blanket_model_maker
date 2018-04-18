@@ -11,7 +11,7 @@
     apt:
       sources:
         # - ubuntu-toolchain-r-test
-        - freecad-maintainers-freecad-daily 
+        - freecad-maintainers
       packages:
         # - lcov
         - freecad-daily 
