@@ -13,7 +13,9 @@ import pytest
 
 class HCLL_tests(unittest.TestCase):
 
-    def test_isotopes_class_name(self):
+    #import examples.make_examples_HCPB_model
+
+    def test_armour_number_of_faces(self):
 
         assert 3==3
 
