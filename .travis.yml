@@ -6,8 +6,8 @@
     - pip install pprint 
     - pip install pandas
     - pip install codecov pytest-cov pylint
-    #- pip install PySide
-    - sudo apt-get install python-pyside
+    - pip install PySide # takes 20 mins
+    #- sudo apt-get install python-pyside
     - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
     - sudo apt-get -qq update;
     - sudo apt-get install -y freecad
