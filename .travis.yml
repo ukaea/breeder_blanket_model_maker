@@ -7,13 +7,13 @@
     - pip install codecov pytest-cov pylint
     #re json sys
   addons:
-  apt:
-    sources:
-      # - ubuntu-toolchain-r-test
-      - freecad-maintainers-freecad-daily 
-    packages:
-      # - lcov
-      - freecad-daily 
+    apt:
+      sources:
+        # - ubuntu-toolchain-r-test
+        - freecad-maintainers-freecad-daily 
+      packages:
+        # - lcov
+        - freecad-daily 
   script:
     #- pip3 install neutronics_material_maker
     - python setup.py test
