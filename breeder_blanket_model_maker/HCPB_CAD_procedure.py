@@ -166,7 +166,7 @@ def HCPB_detailed_module(blanket_parameters_dict):
 
       prefix='_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
 
-      save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
+      dictionary_of_parts= save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
 
 
 

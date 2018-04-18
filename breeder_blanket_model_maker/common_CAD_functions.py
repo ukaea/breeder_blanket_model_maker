@@ -107,6 +107,7 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
             # allow different angles to be input
             print("dictionary_of_parts[component]['step_filename']",dictionary_of_parts[component]['step_filename'])
             component_compound_sliced_with_cylinder.exportStep(dictionary_of_parts[component]['step_filename'])
+    return dictionary_of_parts
 
 def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
     # this does not work at the moment

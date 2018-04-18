@@ -2,8 +2,8 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('FreeCAD Model'),'2;1');
 FILE_NAME('detailed_HCPB/step/armour_sample_envelope_1.step',
-  '2018-03-08T12:09:20',('FreeCAD'),('FreeCAD'),
-  'Open CASCADE STEP processor 7.1','FreeCAD','Unknown');
+  '2018-04-18T15:09:22',('FreeCAD'),('FreeCAD'),
+  'Open CASCADE STEP processor 7.2','FreeCAD','Unknown');
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN_CC2 { 1 2 10303 214 -1 1 5 4 }'));
 ENDSEC;
 DATA;
@@ -15,8 +15,8 @@ DATA;
 #4 = PRODUCT_DEFINITION_SHAPE('','',#5);
 #5 = PRODUCT_DEFINITION('design','',#6,#9);
 #6 = PRODUCT_DEFINITION_FORMATION('','',#7);
-#7 = PRODUCT('Open CASCADE STEP translator 7.1 6',
-  'Open CASCADE STEP translator 7.1 6','',(#8));
+#7 = PRODUCT('Open CASCADE STEP translator 7.2 6',
+  'Open CASCADE STEP translator 7.2 6','',(#8));
 #8 = MECHANICAL_CONTEXT('',#2,'mechanical');
 #9 = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');
 #10 = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#11,#15),#671);
