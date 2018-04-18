@@ -6,15 +6,18 @@
     - pip install pprint 
     - pip install pandas
     - pip install codecov pytest-cov pylint
+    sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
+    sudo apt-get -qq update;
+    sudo apt-get install -y freecad
     #re json sys
-  addons:
-    apt:
-      sources:
-        # - ubuntu-toolchain-r-test
-        - freecad-maintainers/freecad-daily 
-      packages:
-        # - lcov
-        - freecad-daily 
+  # addons:
+  #   apt:
+  #     sources:
+  #       # - ubuntu-toolchain-r-test
+  #       - freecad-maintainers/freecad-daily 
+  #     packages:
+  #       # - lcov
+  #       - freecad-daily 
   script:
     #- pip3 install neutronics_material_maker
     - python setup.py test
