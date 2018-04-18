@@ -1,6 +1,6 @@
 
 ![all_blankets_image](images/all_blankets.jpg)
-
+tests
 
 [![N|Python](https://www.python.org/static/community_logos/python-powered-w-100x40.png)](https://www.python.org)
 
