@@ -5,6 +5,8 @@ import multiprocessing
 
 from breeder_blanket_model_maker import *
 
+# from breeder_blanket_model_maker.HCLL_CAD_procedure import *
+
 def generate_CAD_model(blanket_type):
 
     poloidal_lithium_lead_in_mm = 35.4
@@ -12,6 +14,7 @@ def generate_CAD_model(blanket_type):
     smd = 274. * 1000000.  # units Pa
 
     cooling_plates_channel_poloidal_mm = 3.0
+    cooling_plates_channel_radial_mm = 3.0
     cooling_plates_channel_toroidal_mm = 6.0
     first_wall_channel_radial_mm = 10.0
     first_wall_channel_poloidal_mm = 15.0
@@ -34,7 +37,7 @@ def generate_CAD_model(blanket_type):
 
     poloidal_segmentations_ordered_dict=OrderedDict()
     poloidal_segmentations_ordered_dict['lithium_lead']=poloidal_lithium_lead_in_mm
-    poloidal_segmentations_ordered_dict['cooling_plate_1']=poloidal_cooling_plate_mm
+    poloidal_segmentations_ordered_dict['cooling_plate']=poloidal_cooling_plate_mm
 
     back_walls_thicknesses_ordered_dict=OrderedDict()  #these are special ordereddict types required in python 2.7 but in python 3.6 onwards dictionaries are ordered by default, sadly freecad is not yet avaialbe in python 3
     back_walls_thicknesses_ordered_dict['back_wall_1']=30
@@ -66,9 +69,14 @@ def generate_CAD_model(blanket_type):
             'back_walls_thicknesses' : back_walls_thicknesses_ordered_dict,
             'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
 
-            # 'cooling_channel_offset_from_first_wall': cooling_channel_offset_from_first_wall,
-            # 'first_wall_channel_radial_mm': first_wall_channel_radial_mm,
-            # 'first_wall_channel_poloidal_segmentations': first_wall_channel_poloidal_segmentations_dict,  # 13.5,4.5
+            #The following three arguments are optional, if included the model will include cooling channels on the first wall
+            'cooling_channel_offset_from_first_wall': cooling_channel_offset_from_first_wall,
+            'first_wall_channel_radial_mm': first_wall_channel_radial_mm,
+            'first_wall_channel_poloidal_segmentations': first_wall_channel_poloidal_segmentations_dict,  # 13.5,4.5
+
+            #The following two arguments are optional, if included the model will include a slice of blanket and cooling channels in the cooling plate
+            'cooling_plates_channel_poloidal_mm':cooling_plates_channel_poloidal_mm,
+            'cooling_plates_channel_radial_mm':cooling_plates_channel_radial_mm
         }
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)

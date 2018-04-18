@@ -89,6 +89,7 @@ cubit.cmd('merge all')
 # this could also be done with moab from the h5m file
 # opt/moab/bin/mbconvert filenamewithpath.h5m filenamewithpath.stl
 # the stl's for each material can be output seperatly using the mbconvert -v flag
+# moab offers more control over the STL files and their tolerance
 
 for vols,part,step_filename in zip(volumes_in_each_step_file,parts,input_locations):
     print('vols',vols)
@@ -101,11 +102,3 @@ print('h5m_filename=',h5m_filename)
 #print('export_statement=',export_statement)
 #cubit.cmd(export_statement)
 cubit.cmd('export dagmc "'+h5m_filename+'" faceting_tolerance 1.e-4')
-#cubit.cmd('export dagmc "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
-    # for vol , file_counter in enumerate(vols):
-    #     stl_filename = os.path.join(output_folder,os.path.splitext(os.path.split(step_filename)[1])[0] + '_' + str(file_counter) + '.stl')
-    #     cubit.cmd('export stl "'+stl_filename+'" volume '+str(vol)+' water tight overwrite')
-
-
-
-#export stl "/home/jshim/ukaea_git/breeder_blanket_model_maker_local/test.stl" water tight overwrite

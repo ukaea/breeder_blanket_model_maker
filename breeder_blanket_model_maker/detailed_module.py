@@ -1,8 +1,8 @@
 
-from HCLL_CAD_procedure import *
-from DCLL_CAD_procedure import *
-from WCLL_CAD_procedure import *
-from HCPB_CAD_procedure import *
+from breeder_blanket_model_maker.HCLL_CAD_procedure import *
+from breeder_blanket_model_maker.DCLL_CAD_procedure import *
+from breeder_blanket_model_maker.WCLL_CAD_procedure import *
+from breeder_blanket_model_maker.HCPB_CAD_procedure import *
 
 def detailed_module(blanket_geometry_parameters):
 

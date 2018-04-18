@@ -1,6 +1,7 @@
 import sys
 sys.dont_write_bytecode = True
 sys.path.append('/usr/lib/freecad-daily/lib/')
+#sys.path.append('/usr/lib/freecad/lib/')
 #sys.path.append('/usr/local/lib/')
 import math
 import FreeCAD
@@ -15,6 +16,9 @@ import Mesh
 import Draft
 import MeshPart
 from common_CAD_functions import *
+
+
+
 
 def HCLL_detailed_module(blanket_parameters_dict):
 
@@ -37,14 +41,7 @@ def HCLL_detailed_module(blanket_parameters_dict):
       else:
           plasma = Part.makeTorus(9100, 2900)
 
-      try:
-        envelope = Part.read(envelope_directory_filename)
-      except:
-        print('failed to load envelope from ',envelope_directory_filename)
-        print('trying to load envelope from package directory')
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        envelope = Part.read(os.path.join(dir_path,envelope_directory_filename))
+      envelope = Part.read(envelope_directory_filename)
 
       envelope_back_face = find_envelope_back_face(envelope, plasma)
 
@@ -130,7 +127,7 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
           first_wall_back_layer = first_wall.cut(first_wall_back_layer)
 
-          dictionary_of_parts['first_wall_material']['part'] = [first_wall_front_layer, first_wall_back_layer]
+          #dictionary_of_parts['first_wall_material']['part'] = [first_wall_front_layer, first_wall_back_layer]
 
           first_wall_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
                                                                     poloidal_segmentations=blanket_parameters_dict['first_wall_channel_poloidal_segmentations'],
@@ -142,8 +139,7 @@ def HCLL_detailed_module(blanket_parameters_dict):
           for i, key in enumerate(blanket_parameters_dict['first_wall_channel_poloidal_segmentations']):
               dictionary_of_parts[key]['part'] = first_wall_poloidally_segmented[i]
 
-          dictionary_of_parts['first_wall_material']['part'] = dictionary_of_parts['first_wall_material']['part'] \
-                                                                    + [first_wall_front_layer, first_wall_back_layer]
+          dictionary_of_parts['first_wall_material']['part'] = dictionary_of_parts['first_wall_material']['part']+[first_wall_front_layer, first_wall_back_layer]
 
       end_caps, envelope_removed_endcaps = chop_of_end_caps(end_cap_faces,end_cap_thickness,first_wall_removed_envelope)
 
@@ -152,18 +148,20 @@ def HCLL_detailed_module(blanket_parameters_dict):
       back_face_envelope_removed_caps = find_envelope_back_face(envelope_removed_endcaps, plasma)
 
       back_walls, envelope_removed_back_wall = chop_off_back_walls(back_face=back_face_envelope_removed_caps,
-                                                                             remaining_shapes=envelope_removed_endcaps,
-                                                                             back_walls_thicknesses=back_walls_thicknesses)
+                                                                   remaining_shapes=envelope_removed_endcaps,
+                                                                   back_walls_thicknesses=back_walls_thicknesses)
+
       for i, key in enumerate(blanket_parameters_dict['back_walls_thicknesses']):
           dictionary_of_parts[key]['part'] = [back_walls[i]]
 
       poloidal_segmentations = blanket_parameters_dict['poloidal_segmentations']
 
       envelope_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
-                                                              poloidal_segmentations=poloidal_segmentations,
-                                                              envelope=envelope_removed_back_wall,
-                                                              method='HCLL',top_bottom_edges=front_face_torodial_edges_to_fillet,
-                                                              front_face=envelope_front_face)
+                                                         poloidal_segmentations=poloidal_segmentations,
+                                                         envelope=envelope_removed_back_wall,
+                                                         method='HCLL',
+                                                         top_bottom_edges=front_face_torodial_edges_to_fillet,
+                                                         front_face=envelope_front_face)
 
       lithium_lead = envelope_poloidally_segmented[0]
 
@@ -175,15 +173,65 @@ def HCLL_detailed_module(blanket_parameters_dict):
           else:
             dictionary_of_parts[key]['part'] = envelope_poloidally_segmented[i]
 
-      cylinder_slice = make_cylinder_slice(10)
+
+      if 'cooling_plates_channel_poloidal_mm' in blanket_parameters_dict and 'cooling_channel_offset_from_first_wall' in blanket_parameters_dict and 'first_wall_channel_radial_mm' in blanket_parameters_dict and 'first_wall_channel_poloidal_segmentations' in blanket_parameters_dict:
+      #if 'slice' in blanket_parameters_dict:
+
+        slice = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
+                                   poloidal_segmentations=poloidal_segmentations,
+                                   envelope=envelope,
+                                   method='HCLL_slice',
+                                   top_bottom_edges=front_face_torodial_edges_to_fillet,
+                                   front_face=envelope_front_face)
+
+        dictionary_of_parts['slice_lithium_lead']['part'], dictionary_of_parts['lithium_lead']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['lithium_lead']['part'], slice)
+
+
+
+
+
+        dictionary_of_parts['slice_armour']['part'],dictionary_of_parts['armour']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['armour']['part'],slice)
+        dictionary_of_parts['slice_first_wall_homogenised']['part'],dictionary_of_parts['first_wall_homogenised']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['first_wall_homogenised']['part'],slice)
+        dictionary_of_parts['slice_first_wall_material']['part'],dictionary_of_parts['first_wall_material']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['first_wall_material']['part'],slice)
+        dictionary_of_parts['slice_first_wall_coolant']['part'],dictionary_of_parts['first_wall_coolant']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['first_wall_coolant']['part'],slice)
+
+        for i, key in enumerate(blanket_parameters_dict['back_walls_thicknesses']):
+          dictionary_of_parts['slice_'+key]['part'],dictionary_of_parts[key]['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts[key]['part'],slice)
+        #for i, key in enumerate(blanket_parameters_dict['poloidal_segmentations']):
+        #  dictionary_of_parts['slice_'+key]['part'],dictionary_of_parts[key]['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts[key]['part'],slice)
+
+        dictionary_of_parts['slice_cooling_plate']['part'], dictionary_of_parts['cooling_plate']['part'] = common_and_uncommon_solids_with_envelope(cooling_plate, slice)
+
+        #Part.makeCompound(cooling_plate_in_slice).exportStep('cooling_plate_in_slice.step')
+
+        list_of_cooling_pipes, list_of_structure = add_cooling_pipes_to_div(div_to_cool=dictionary_of_parts['slice_cooling_plate']['part'][0],
+                                                                            channel_poloidal_height = blanket_parameters_dict['cooling_plates_channel_poloidal_mm'],
+                                                                            channel_radial_height = blanket_parameters_dict['cooling_plates_channel_radial_mm'],
+                                                                            plate_poloidal_height = blanket_parameters_dict['poloidal_segmentations']['cooling_plate'],
+                                                                            plasma=plasma)
+
+        #dictionary_of_parts['slice']['part'] = slice
+
+        dictionary_of_parts['slice_cooling_plate_coolant']['part'] = list_of_cooling_pipes
+        dictionary_of_parts['slice_cooling_plate_material']['part'] = list_of_structure
 
       prefix='_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
 
-      save_components_as_step(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_step, filename_prefix =prefix)
+
+
+
+
+
+      save_components_as_step(dictionary_of_parts = dictionary_of_parts,
+                              output_folder = output_folder_step,
+                              filename_prefix =prefix)#,
+                              #envelope=envelope)
+
 
       save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
                                          output_folder=output_folder_merged_stl,
                                          blanket_type=blanket_parameters_dict['blanket_type'])
+
 
       save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
 

@@ -37,14 +37,7 @@ def HCPB_detailed_module(blanket_parameters_dict):
       else:
           plasma = Part.makeTorus(9100, 2900)
 
-      try:
-        envelope = Part.read(envelope_directory_filename)
-      except:
-        print('failed to load envelope from ',envelope_directory_filename)
-        print('trying to load envelope from package directory')
-        path = os.path.abspath(__file__)
-        dir_path = os.path.dirname(path)
-        envelope = Part.read(os.path.join(dir_path,envelope_directory_filename))
+      envelope = Part.read(envelope_directory_filename)
 
       envelope_back_face = find_envelope_back_face(envelope, plasma)
 

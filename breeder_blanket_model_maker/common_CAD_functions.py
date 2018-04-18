@@ -1,7 +1,8 @@
 import shutil
 import sys
 sys.dont_write_bytecode = True
-sys.path.append('/usr/lib/freecad-daily/lib/')
+#sys.path.append('/usr/lib/freecad-daily/lib/')
+sys.path.append('/usr/lib/freecad/lib/')
 import math
 import FreeCAD
 from FreeCAD import Base
@@ -14,6 +15,8 @@ import rewrite_cad_files
 import Mesh
 import Draft
 import MeshPart
+import numpy as np
+import heapq
 
 
 
@@ -67,6 +70,16 @@ def save_components_as_stl(dictionary_of_parts,output_folder):
 
         dictionary_of_parts[component]['stl_filename']=filename_list
 
+def fuse_compound_of_solids(all):
+    starting_part = all.Solids[0]  # Part.makeSolid(Part.Shape)
+    list_of_solids = []
+    for solid in all.Solids[1:]:
+        print(solid.Volume)
+        list_of_solids.append(solid)
+
+        starting_part = starting_part.fuse(solid)
+    return starting_part
+
 def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''):
 
     try:
@@ -80,16 +93,20 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
         print(dictionary_of_parts[component]['step_filename'])
         print(dictionary_of_parts[component]['part'])
 
-        if type(dictionary_of_parts[component]['part']) != list:
-            component_compound = Part.makeCompound([dictionary_of_parts[component]['part']])
-        else:
-            component_compound = Part.makeCompound(dictionary_of_parts[component]['part'])
 
-        component_compound_sliced_with_cylinder = component_compound.common(make_cylinder_slice(angle=10))
-        #todo
-        #print('output_folder',output_folder)
-        print("dictionary_of_parts[component]['step_filename']",dictionary_of_parts[component]['step_filename'])
-        component_compound_sliced_with_cylinder.exportStep(dictionary_of_parts[component]['step_filename'])
+        component_compound = Part.makeCompound(dictionary_of_parts[component]['part'])
+
+
+        if component.startswith('slice_'):
+    
+            component_compound.exportStep(dictionary_of_parts[component]['step_filename'])
+        else:
+            
+            component_compound_sliced_with_cylinder = component_compound.common(make_cylinder_slice(angle=10))
+            # todo
+            # allow different angles to be input
+            print("dictionary_of_parts[component]['step_filename']",dictionary_of_parts[component]['step_filename'])
+            component_compound_sliced_with_cylinder.exportStep(dictionary_of_parts[component]['step_filename'])
 
 def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
     # this does not work at the moment
@@ -110,19 +127,12 @@ def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
 
 
     os.system('rm *.jou')
-
-    path = os.path.abspath(__file__)
-    dir_path = os.path.dirname(path)
-    path_and_file =os.path.join(dir_path,'convert_step_files_to_h5m_with_trelis.py')
-
-    #os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
-
+    os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
     print('trelis convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     print('trelis h5m done')
-    os.system('rm *.jou')
 
 
 def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket_type):
@@ -143,22 +153,16 @@ def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket
 
 
     os.system('rm *.jou')
-
-    path = os.path.abspath(__file__)
-    dir_path = os.path.dirname(path)
-    path_and_file =os.path.join(dir_path,'convert_step_files_to_stl_with_trelis.py')
-
-    print('trelis -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch '+path_and_file+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    print('trelis -nographics -batch convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
     #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     print('trelis merged stl done')
-    os.system('rm *.jou')
+
     if success == 0:
         return True
     else:
         return False
-
 
 def find_common_bodies(chopper,chopped):
     common_parts=[]
@@ -438,6 +442,16 @@ def find_front_face_midpoint(front_face):
 
     return midpoint
 
+def common_and_uncommon_solids_with_envelope(list_of_solids, slice):
+    list_of_common_solids = []
+    list_of_not_common_solids = []
+    for solid in list_of_solids:
+        common_material = solid.common(slice)
+        if common_material.Volume > 0:
+            list_of_common_solids.append(common_material)
+        list_of_not_common_solids.append(solid.cut(slice))
+    return list_of_common_solids,list_of_not_common_solids
+
 def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_bottom_edges,front_face):
     poloidal_segmentations_list=[]
     for key in poloidal_segmentations:
@@ -489,6 +503,14 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
         slices_of_blanket1 = exstrude_and_cut_solids(list_of_distances=cumlative_extrusion_lengths1, face=poly_face, envelope=envelope)
         slices_of_blanket2 = exstrude_and_cut_solids(list_of_distances=cumlative_extrusion_lengths2, face=poly_face, envelope=envelope)
 
+    if method =='HCLL_slice':
+
+        return exstrude_and_cut_solids(list_of_distances=[cumlative_extrusion_lengths1[0]+
+                                                          cumlative_extrusion_lengths1[1]],
+                                       face=poly_face, envelope=envelope)
+
+
+
     collection_of_solids=[]
 
     for counter , key in enumerate( poloidal_segmentations):
@@ -513,6 +535,136 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
 #            self.dictionary_of_parts[key]['part'] = new_list
 
     return collection_of_solids
+
+def find_largest_face(solid_or_list_of_faces,n=1):
+    if type(solid_or_list_of_faces) == list:
+        print('a list')
+        list_of_faces = solid_or_list_of_faces
+    else:
+        print('not a list')
+        list_of_faces = solid_or_list_of_faces.Faces
+
+    face_sizes=[]
+    face_ids=[]
+    for face_id, face in enumerate(list_of_faces):
+        face_sizes.append(face.Area)
+        face_ids.append(face_id)
+
+    print('face_sizes',face_sizes)
+    largest_size = heapq.nlargest(n, face_sizes)[-1]
+
+    index_to_return = face_sizes.index(largest_size)
+
+
+    return list_of_faces[index_to_return] , face_ids[index_to_return]
+
+
+def chop_top_and_bottom_from_cooling_plate(plate, channel_poloidal_height,plate_poloidal_height):
+
+    print('plate',plate)
+
+    largest_face, largest_face_id=find_largest_face(plate)
+
+    thickness_of_top_bottom_layers = (plate_poloidal_height-channel_poloidal_height)/2.0
+
+#    poly_face.scale(2.0, poly_face.CenterOfMass)
+
+    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * thickness_of_top_bottom_layers)
+
+    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
+
+    top = new_face1.fuse(new_face2)
+
+    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -(channel_poloidal_height +thickness_of_top_bottom_layers ))
+
+    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * (channel_poloidal_height +thickness_of_top_bottom_layers ))
+
+    middle = new_face1.fuse(new_face2)
+
+    pre_skinny_div_to_cool = plate.common(middle)
+    skinny_div_to_cool = pre_skinny_div_to_cool.cut(top)
+
+    top_bottom = plate.cut(skinny_div_to_cool)
+
+    return skinny_div_to_cool, top_bottom
+
+
+def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_height,plate_poloidal_height,plasma):
+
+    middle, top_bottom = chop_top_and_bottom_from_cooling_plate(plate=div_to_cool,
+                                                                channel_poloidal_height=channel_poloidal_height,
+                                                                plate_poloidal_height=plate_poloidal_height)
+
+   
+    largest_face, largest_face_id = find_largest_face(div_to_cool)
+
+    second_largest_face, second_largest_face_id = find_largest_face(div_to_cool,2)
+
+    back_face = find_envelope_back_face(div_to_cool,plasma)
+    back_face_id = find_envelope_back_face_id(div_to_cool,plasma)
+
+    print('face ids ',largest_face_id,second_largest_face_id,back_face_id)
+
+    #faces_not_in_first_wall = [div_to_cool.Faces[largest_face_id],div_to_cool.Faces[second_largest_face_id],div_to_cool.Faces[back_face_id]]
+    faces_not_in_first_wall = [largest_face,back_face,second_largest_face]
+    print(faces_not_in_first_wall)
+    
+    #print('poloidal_cooling_plate_mm',poloidal_cooling_plate_mm)
+
+    step_list=[0]
+    for c in range(34):#must be and even number to make sure pipe has both front back walls
+        if c % 2 == 0:
+            step_list.append(step_list[c]+10+c)
+            print(step_list[c]+10+(c*1.5))
+        else:
+            step_list.append(step_list[c]+channel_radial_height)
+    print('step_list',step_list)
+    print('faces_not_in_first_wall',faces_not_in_first_wall)
+
+    list_of_cooling_pipes=[]
+    list_of_structure=[]
+
+    try:
+        for counter, step in enumerate(step_list[1:]):
+            print(counter,step)
+
+            #cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
+            cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
+            print(counter,cooling_solid.Volume)
+
+
+            if counter==0:
+
+                #save_list_of_solids_to_stp(cooling_solid, 'cooling_solid' + str(counter))
+                cooling_solid = cooling_solid.cut(top_bottom)
+                list_of_structure.append(cooling_solid)
+            else:
+                cut_solid= cooling_solid.cut(previous_solid)
+
+                #save_list_of_solids_to_stp(cut_solid, 'cooling_solid' + str(counter))
+                #all_solids = cooling_solid.fuse(previous_solid)
+
+                if counter % 2 == 0:
+                    cut_solid = cut_solid.cut(top_bottom)
+                    list_of_structure.append(cut_solid)
+                else:
+                    cut_solid=cut_solid.cut(top_bottom)
+                    list_of_cooling_pipes.append(cut_solid)
+
+
+            #if counter!=0 and cut_solid.Volume < 3000000:
+            #    break
+
+            previous_solid=cooling_solid
+    except:
+        print('error the end of the cooling channels has been reached')
+
+    list_of_structure.append(middle.cut(cooling_solid))
+    list_of_structure.append(top_bottom)
+
+
+    return list_of_cooling_pipes,list_of_structure
+
 
 def chop_up_toroidally(toroidal_segmentations,envelope,front_face_torodial_edges_to_fillet,front_face,number_required=1000): # settings,list_of_envelopes, list_of_front_faces,stp, stl):
     print('chopping up toroidally')

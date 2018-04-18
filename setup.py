@@ -21,11 +21,12 @@ setup(name='breeder_blanket_model_maker',
       author_email='jonathan.shimwell@ukaea.uk',
       license='Apache 2.0',
       packages=['breeder_blanket_model_maker','examples'],
-      #test_suite='breeder_blanket_model_maker.tests.module_tests',
-      zip_safe=False,
-      package_data={'':['requirements.txt', 'README.md', 'LICENSE','sample_envelope_1.step','sample_envelope_2.step']},
+      test_suite='testsuite', # works in python 2
+      #test_suite='tests.testsuite', # does not work within a folder in python 2
+      zip_safe=True,
+      package_data={'':['requirements.txt', 'README.md','README.md.html', 'LICENSE','sample_envelope_1.step','sample_envelope_2.step']},
       #install_requires=requirements,
       #setup_requires=['pytest-runner'],
-      #tests_require=['pytest']
+      tests_require=['pytest']
       )
 
