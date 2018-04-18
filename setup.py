@@ -13,7 +13,7 @@ from setuptools import setup
 
 
 setup(name='breeder_blanket_model_maker',
-      version='0.001',
+      version='0.002',
       summary='Package for making 3D parametric breeder blanket models',
       description='Input blanket envelopes and retrive detailed blanket geometry',
       url='https://github.com/ukaea/breeder_blanket_model_maker',

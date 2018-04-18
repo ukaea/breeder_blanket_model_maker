@@ -12,7 +12,7 @@ class HCLL_tests(unittest.TestCase):
 
 
     blanket_type='HCPB'
-    module_filenames= ['sample_envelope_1.step']#,'sample_envelope_2.step']
+    module_filenames= ['sample_envelope_1.step','sample_envelope_2.step']
     list_of_compressed_arguments=[]
     for module in module_filenames:
 
@@ -52,21 +52,44 @@ class HCLL_tests(unittest.TestCase):
         }
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)
-    global HCPB_dictionary_of_parts
-    HCPB_dictionary_of_parts=HCPB_detailed_module(list_of_compressed_arguments[0])
+    global HCPB_dictionary_of_parts_envelope_1 #this one is cut
+    global HCPB_dictionary_of_parts_envelope_2
+    HCPB_dictionary_of_parts_envelope_1=HCPB_detailed_module(list_of_compressed_arguments[0])
+    #HCPB_dictionary_of_parts_envelope_2=HCPB_detailed_module(list_of_compressed_arguments[1])
 
 
 
     def test_armour_number_of_solids(self):
-        multipart_step = Part.read(HCPB_dictionary_of_parts['armour']['step_filename'])
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['armour']['step_filename'])
         print('number of solids =', len(multipart_step.Solids) )
         assert len(multipart_step.Solids) == 1
 
-
     def test_armour_number_of_faces(self):
-        multipart_step = Part.read(HCPB_dictionary_of_parts['armour']['step_filename'])
-        print('number of faces =', multipart_step.Solids[0].Faces )
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['armour']['step_filename'])
+        print('number of faces =', len(multipart_step.Solids[0].Faces ))
         assert len(multipart_step.Solids[0].Faces) == 10
+
+    def test_first_wall_homogenised_number_of_solids(self):
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['first_wall_homogenised']['step_filename'])
+        print('number of solids =', len(multipart_step.Solids) )
+        assert len(multipart_step.Solids) == 1
+
+    def test_first_wall_homogenised_number_of_faces(self):
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['first_wall_homogenised']['step_filename'])
+        print('number of faces =', len(multipart_step.Solids[0].Faces ))
+        assert len(multipart_step.Solids[0].Faces) == 10        
+
+    def test_end_caps_number_of_solids(self):
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['end_caps_homogenised']['step_filename'])
+        print('number of solids =', len(multipart_step.Solids) )
+        assert len(multipart_step.Solids) == 2
+
+    def test_end_caps_number_of_faces(self):
+        multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['end_caps_homogenised']['step_filename'])
+        print('number of faces =',len(multipart_step.Solids[0].Faces ))
+        print('number of faces =',len(multipart_step.Solids[1].Faces ))
+        assert len(multipart_step.Solids[0].Faces) == 7           
+        assert len(multipart_step.Solids[1].Faces) == 7           
 
     #todo
     #def test_armour_thickness(self):

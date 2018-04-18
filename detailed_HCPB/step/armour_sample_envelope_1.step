@@ -2,7 +2,7 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('FreeCAD Model'),'2;1');
 FILE_NAME('detailed_HCPB/step/armour_sample_envelope_1.step',
-  '2018-04-18T15:09:22',('FreeCAD'),('FreeCAD'),
+  '2018-04-18T16:54:26',('FreeCAD'),('FreeCAD'),
   'Open CASCADE STEP processor 7.2','FreeCAD','Unknown');
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN_CC2 { 1 2 10303 214 -1 1 5 4 }'));
 ENDSEC;
