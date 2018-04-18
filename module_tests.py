@@ -1,7 +1,4 @@
 
-
-
-
 from breeder_blanket_model_maker import *
 
 import random
@@ -55,27 +52,31 @@ class HCLL_tests(unittest.TestCase):
         }
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)
-    global dictionary_of_parts
-    dictionary_of_parts=HCPB_detailed_module(list_of_compressed_arguments[0])
+    global HCPB_dictionary_of_parts
+    HCPB_dictionary_of_parts=HCPB_detailed_module(list_of_compressed_arguments[0])
 
 
 
     def test_armour_number_of_solids(self):
-        multipart_step = Part.read(dictionary_of_parts['armour']['step_filename'])
+        multipart_step = Part.read(HCPB_dictionary_of_parts['armour']['step_filename'])
         print('number of solids =', len(multipart_step.Solids) )
         assert len(multipart_step.Solids) == 1
 
 
     def test_armour_number_of_faces(self):
-        multipart_step = Part.read(dictionary_of_parts['armour']['step_filename'])
+        multipart_step = Part.read(HCPB_dictionary_of_parts['armour']['step_filename'])
         print('number of faces =', multipart_step.Solids[0].Faces )
         assert len(multipart_step.Solids[0].Faces) == 10
 
     #todo
     #def test_armour_thickness(self):
     #def test_first_wall_thickness
-    #def test_first_wall_thickness
-    #def test_first_wall_thickness
+    #def test_first_wall_number_of_solids
+    #def test_first_wall_number_of_faces
+    #def test volumes compared to STL files
+    #def test volumes compared to other STEP files (ratio of thicknesses)
+    #def test watertightness of all STL and STEP?
+
 
 
 

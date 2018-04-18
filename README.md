@@ -1,8 +1,8 @@
 
 ![all_blankets_image](images/all_blankets.jpg)
 
-
 [![N|Python](https://www.python.org/static/community_logos/python-powered-w-100x40.png)](https://www.python.org)
+[![Build Status](https://travis-ci.org/ukaea/breeder_blanket_model_maker.svg?branch=master)](https://travis-ci.org/ukaea/breeder_blanket_model_maker)
 
 - [Design goals](#design-goals)
 - [Features](#features)
@@ -51,9 +51,9 @@ $ python setup.py install
 ### <a name="installation-of-dependencies"></a>Installation of dependencies
 
 Breeder_blanket_model_maker relies on a number dependencies of to work properly:
-* [FreeCAD](https://www.freecadweb.org) -  a fully scriptable open source parametric 3D modeler
-* [Python](https://www.python.org) - a programming language that lets you work quickly and integrate systems more effectively, currently the only Python 2 is suported.
-* [Trelis](http://www.csimsoft.com) - (optinal) scriptable meshing software that also performs imprint and merge opperations required for non overlapping STL geometry.
+* [FreeCAD](https://www.freecadweb.org) -  a fully programmable open source parametric 3D modeler
+* [Python](https://www.python.org) - a programming language that lets you work quickly and integrate systems more effectively, currently the only Python 2 is supported.
+* [Trelis](http://www.csimsoft.com) - (optional) programmable meshing software that also performs imprint and merge operations required for non overlapping STL geometry.
 
 
 You can [install the latest release of FreeCAD](https://www.freecadweb.org/wiki/Installing) in Ubuntu with the following command :
@@ -62,7 +62,7 @@ You can [install the latest release of FreeCAD](https://www.freecadweb.org/wiki/
 sudo apt-get install freecad
 ```
 
-Alternativly you can install the most recent pre-release version straight from the repository with these commands:
+Alternatively you can install the most recent pre-release version straight from the repository with these commands:
 ```sh
 $ sudo apt-get install software-properties-common python-software-properties
 $ sudo add-apt-repository ppa:freecad-maintainers/freecad-daily
@@ -88,7 +88,7 @@ Installation of Trelis is best described on the [CSimSoft website](http://www.cs
 
 # <a name="getting-started"></a>Getting started
 
-In general to make a detailed breeder blanket you simply import the breeder_blanket_model_maker decide upon the dimentions of various components and provide a blanket envelope. The following code is incomplete but provides a skeleton example.
+In general to make a detailed breeder blanket you simply import the breeder_blanket_model_maker decide upon the dimensions of various components and provide a blanket envelope. The following code is incomplete but provides a skeleton example.
 
 ```python
 from breeder_blanket_model_maker import *
@@ -96,7 +96,7 @@ from breeder_blanket_model_maker import *
 blanket_geometry_parameters =  {
 # identify a blanket type (WCLL, HCLL, HCPB, HCLL)
 ...
-# assign dimentions to all required components
+# assign dimensions to all required components
 ...
 # provide a blanket envelope
 }
@@ -112,7 +112,7 @@ Two example blanket envelopes are provided with the package for users to experim
 
 ### <a name="making-hcpb-blankets"></a>Making HCPB blankets
 
-To make a Helium Cooled Pebble Bed Blanket (HCPB) the package must be imported. The envelope filename must be specified, here we use one of the example envelopes. The output folder for generated STL, STEP and h5m files must be specified. The dimentions of various componets must also be stated. The order of the back walls and poloidal segmentations is important so and orderedDict type has been used (Python 2 dones not presever order of dictionaries). Here is an example input:
+To make a Helium Cooled Pebble Bed Blanket (HCPB) the package must be imported. The envelope filename must be specified, here we use one of the example envelopes. The output folder for generated STL, STEP and h5m files must be specified. The dimensions of various components must also be stated. The order of the back walls and poloidal segmentations is important so and orderedDict type has been used (Python 2 does not preserve order of dictionaries). Here is an example input:
 
 ```python
 from breeder_blanket_model_maker import *
@@ -142,7 +142,7 @@ blanket_geometry_parameters =  {
 
 detailed_blanket(blanket_geometry_parameters)
 ```
-Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+Running the above code will generate a 3D detailed blanket design for your envelope. A slice through the resulting geometry will looks like the following image:
 
 <a name="images/HCPB.pdf">![sample_envelope_2](images/HCPB_small.png)</a>
 
@@ -152,7 +152,7 @@ Additional detail can be added by uncommenting *cooling_channel_offset_from_firs
 
 ### <a name="making-hcll-blankets"></a>Making HCLL blankets
 
-Helium Cooled Liqiuth Lead (HCLL) blankets take similar input parameters to the previous HCPB example. Again the first wall cooling channels are commented out on this example but they can be uncomment for additional detail.
+Helium Cooled Lithium Lead (HCLL) blankets take similar input parameters to the previous HCPB example. Again the first wall cooling channels are commented out on this example but they can be uncomment for additional detail.
 
 ```python
 blanket_geometry_parameters =  {
@@ -179,7 +179,7 @@ blanket_geometry_parameters =  {
 
 detailed_blanket(blanket_geometry_parameters)
 ```
-Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+Running the above code will generate a 3D detailed blanket design for your envelope. A slice through the resulting geometry will looks like the following image:
 
 <a name="images/HCLL.pdf">![sample_envelope_2](images/HCLL_small.png)</a>
 
@@ -213,13 +213,13 @@ blanket_geometry_parameters =  {
 
 detailed_module(blanket_geometry_parameters)
 ```
-Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+Running the above code will generate a 3D detailed blanket design for your envelope. A slice through the resulting geometry will looks like the following image:
 
 <a name="images/WCLL.pdf">![sample_envelope_2](images/WCLL_small.png)</a>
 
 ### <a name="making-dcll-blankets"></a>Making DCLL blankets
 
-To make the Duel Cooled Lithium Lead (DCLL) additional parmenters are needed. *poloidal_upper_offset_for_breeder_channel* and *poloidal_lower_offset_for_breeder_channel* are the space provided for upper and lower lead flow channels.
+To make the Duel Cooled Lithium Lead (DCLL) additional parameters are needed. *poloidal_upper_offset_for_breeder_channel* and *poloidal_lower_offset_for_breeder_channel* are the space provided for upper and lower lead flow channels.
 
 ```python
 from breeder_blanket_model_maker import *
@@ -254,14 +254,12 @@ blanket_geometry_parameters =  {
 
 detailed_module(blanket_geometry_parameters)
 ```
-Running the above code will generate a 3D detailed blanket design for your enevelope. A slice through the resulting geometry will looks like the following image:
+Running the above code will generate a 3D detailed blanket design for your envelope. A slice through the resulting geometry will looks like the following image:
 
 <a name="images/DCLL.pdf">![sample_envelope_2](images/DCLL_small.png)</a>
 
 
 ### <a name="todo"></a>Todo
- - Hook up Travic CI
  - Write MORE Tests
- - Upload tested source code
- - Write better user documentation  
+ - Write user documentation for first wall cooling and slice gemoetry
  - Generate unstrucutred mesh of geometry
