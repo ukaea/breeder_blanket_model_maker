@@ -62,7 +62,7 @@ class HCLL_tests(unittest.TestCase):
     def test_armour_number_of_solids(self):
         multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['armour']['step_filename'])
         print('number of solids =', len(multipart_step.Solids) )
-        assert len(multipart_step.Solids) == 1
+        assert len(multipart_step.Solids) == 2
 
     def test_armour_number_of_faces(self):
         multipart_step = Part.read(HCPB_dictionary_of_parts_envelope_1['armour']['step_filename'])
