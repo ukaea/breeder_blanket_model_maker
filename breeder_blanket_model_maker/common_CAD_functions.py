@@ -1,8 +1,9 @@
 import shutil
 import sys
 sys.dont_write_bytecode = True
-#sys.path.append('/usr/lib/freecad-daily/lib/')
+sys.path.append('/usr/lib/freecad-daily/lib/')
 sys.path.append('/usr/lib/freecad/lib/')
+
 import math
 import FreeCAD
 from FreeCAD import Base

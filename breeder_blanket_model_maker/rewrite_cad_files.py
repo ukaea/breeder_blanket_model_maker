@@ -17,8 +17,11 @@ sudo apt-get install freecad-daily
 
 
 import sys
-#sys.path.append('/usr/lib/freecad/lib/')
+
 sys.path.append('/usr/lib/freecad-daily/lib/')
+sys.path.append('/usr/lib/freecad/lib/')
+
+
 import math
 import FreeCAD
 from FreeCAD import Base

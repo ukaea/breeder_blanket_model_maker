@@ -2,6 +2,7 @@
 import sys
 sys.dont_write_bytecode = True
 sys.path.append('/usr/lib/freecad-daily/lib/')
+sys.path.append('/usr/lib/freecad/lib/')
 #sys.path.append('/usr/local/lib/')
 import math
 import FreeCAD
