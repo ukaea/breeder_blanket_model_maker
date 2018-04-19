@@ -9,7 +9,8 @@
   - docker pull shimwell/breeder_blanket_model_maker_dependencies 
   - docker run shimwell/breeder_blanket_model_maker_dependencies
 
-  # no longer required as a docker image containing all dependencies is used instead. This results in faster testing
+  # no longer required as a docker image containing all dependencies is used instead. 
+  # This results in faster testing as now the Continuous Integration server simply downloads the Docker image instead  of installing and compiling dependencies
   #install:
     # - pip install numpy 
     # - pip install pprint 
