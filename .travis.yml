@@ -1,31 +1,29 @@
   language: python
   python:
     - "2.7"
+
+  services:
+  - docker
+
+  before_install:
+  - docker pull shimwell/breeder_blanket_model_maker 
+  - docker run breede_rblanket_model_maker_dependencies
+  
   install:
-    - pip install numpy 
-    - pip install pprint 
-    - pip install pandas
-    - pip install codecov pytest-cov pylint
-    - pip install PySide # takes 20 mins
-    #- sudo apt-get install python-pyside
-    - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
-    - sudo apt-get -qq update;
-    - sudo apt-get install -y freecad
-    #re json sys
-  # addons:
-  #   apt:
-  #     sources:
-  #       # - ubuntu-toolchain-r-test
-  #       - freecad-maintainers/freecad-daily 
-  #     packages:
-  #       # - lcov
-  #       - freecad-daily 
+
+    # no longer required as a docker image containing all dependencies is used instead. This results in faster testing
+    # - pip install numpy 
+    # - pip install pprint 
+    # - pip install pandas
+    # - pip install codecov pytest-cov pylint
+    # - pip install PySide # takes 20 mins
+    # - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
+    # - sudo apt-get -qq update;
+    # - sudo apt-get install -y freecad
+
   script:
     - export PYTHONPATH=$PYTHONPATH:/usr/lib/freecad/lib
-    #- pip3 install neutronics_material_maker
     - python setup.py test
-    #- pytest
-    #- covercov -run 
-    #- pytest tests/module_tests.py
+
   #after_success:
   #  - codecov
