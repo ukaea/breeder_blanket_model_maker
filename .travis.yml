@@ -7,7 +7,7 @@
 
   before_install:
   - docker pull shimwell/breeder_blanket_model_maker_dependencies 
-  - docker run breeder_blanket_model_maker_dependencies
+  - docker run shimwell/breeder_blanket_model_maker_dependencies
 
   # no longer required as a docker image containing all dependencies is used instead. This results in faster testing
   #install:
