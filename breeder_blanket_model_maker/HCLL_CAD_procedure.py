@@ -16,9 +16,7 @@ import Mesh
 import Draft
 import MeshPart
 from common_CAD_functions import *
-
-
-
+import pprint
 
 def HCLL_detailed_module(blanket_parameters_dict):
 
@@ -26,6 +24,10 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
       envelope_directory_filename = blanket_parameters_dict['envelope_filename']
       output_folder = blanket_parameters_dict['output_folder']
+      if 'output_files' in blanket_parameters_dict.keys():
+        output_files = blanket_parameters_dict['output_files']
+      else:
+        output_files=['step','stl','h5m','merged_stl']
       output_folder_step = output_folder+'/step'
       output_folder_stl = output_folder+'/stl'
       output_folder_h5m = output_folder + '/h5m'
@@ -41,7 +43,9 @@ def HCLL_detailed_module(blanket_parameters_dict):
       else:
           plasma = Part.makeTorus(9100, 2900)
 
-      envelope = Part.read(envelope_directory_filename)
+
+
+      envelope = read_in_envelope_file(envelope_directory_filename)
 
       envelope_back_face = find_envelope_back_face(envelope, plasma)
 
@@ -217,26 +221,25 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
       prefix='_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
 
+      
 
 
+      if 'step' in output_files:
+          save_components_as_step(dictionary_of_parts = dictionary_of_parts, 
+                                  output_folder = output_folder_step, 
+                                  filename_prefix =prefix)
 
-
-
-      save_components_as_step(dictionary_of_parts = dictionary_of_parts,
-                              output_folder = output_folder_step,
-                              filename_prefix =prefix)#,
-                              #envelope=envelope)
-
-
-      save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
+      if 'merged_stl' in output_files:
+          save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
                                          output_folder=output_folder_merged_stl,
                                          blanket_type=blanket_parameters_dict['blanket_type'])
 
+      if 'stl' in output_files:
+          save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
 
-      save_components_as_stl(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_stl)
-
-      save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
-
+      if 'h5m' in output_files:
+          save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, output_folder = output_folder_h5m, blanket_type=blanket_parameters_dict['blanket_type'])
 
 
-      return dictionary_of_parts
+
+      return dictionary_of_parts #.update({'logtime_data':logtime_data})

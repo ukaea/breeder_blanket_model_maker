@@ -2,7 +2,8 @@ import sys
 sys.dont_write_bytecode = True
 from collections import OrderedDict
 import multiprocessing
-
+import math
+import ord
 from breeder_blanket_model_maker import *
 
 # from breeder_blanket_model_maker.HCLL_CAD_procedure import *
@@ -32,8 +33,7 @@ def generate_CAD_model(blanket_type):
     cooling_channel_offset_from_first_wall = (first_walls_thickness_mm - first_wall_channel_radial_mm) / 2.0
 
     if cooling_channel_offset_from_first_wall < 1.0:
-        print('first wall is too thin at ',cooling_channel_offset_from_first_wall, 'mm')
-        sys.exit()
+        raise ValueError('first wall is too thin at ',cooling_channel_offset_from_first_wall, 'mm')
 
     poloidal_segmentations_ordered_dict=OrderedDict()
     poloidal_segmentations_ordered_dict['lithium_lead']=poloidal_lithium_lead_in_mm
@@ -62,6 +62,7 @@ def generate_CAD_model(blanket_type):
             'blanket_type' : blanket_type,
             'envelope_filename' : module,
             'output_folder' : 'detailed_'+blanket_type,
+            'output_files':['step'],
             'first_wall_poloidal_fillet_radius' : 50,
             'armour_thickness' : 2,
             'first_wall_thickness' : first_walls_thickness_mm,
@@ -81,10 +82,8 @@ def generate_CAD_model(blanket_type):
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)
 
-    p = multiprocessing.Pool(multiprocessing.cpu_count()-1)
 
-    if blanket_type=='HCLL':
-        detailed_modules_parts = p.map(HCLL_detailed_module,list_of_compressed_arguments)
+    detailed_modules_parts =detailed_module(list_of_compressed_arguments)
 
     return detailed_modules_parts
 

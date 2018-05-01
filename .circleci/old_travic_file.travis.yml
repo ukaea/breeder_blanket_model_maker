@@ -1,0 +1,32 @@
+  language: python
+  python:
+    - "2.7"
+
+  services:
+  - docker
+
+  before_install:
+  - docker pull shimwell/breeder_blanket_model_maker_dependencies 
+  - docker run shimwell/breeder_blanket_model_maker_dependencies
+
+  additional steps are required to find the image ID etc, see the DAGMC github for the method.
+  To avoid this Circle CI was used as it starts with a container image
+
+  # no longer required as a docker image containing all dependencies is used instead. 
+  # This results in faster testing as now the Continuous Integration server simply downloads the Docker image instead  of installing and compiling dependencies
+  #install:
+    # - pip install numpy 
+    # - pip install pprint 
+    # - pip install pandas
+    # - pip install codecov pytest-cov pylint
+    # - pip install PySide # takes 20 mins
+    # - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
+    # - sudo apt-get -qq update;
+    # - sudo apt-get install -y freecad
+
+  script:
+    - export PYTHONPATH=$PYTHONPATH:/usr/lib/freecad/lib
+    - python setup.py test
+
+  #after_success:
+  #  - codecov

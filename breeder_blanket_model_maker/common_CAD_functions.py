@@ -18,10 +18,13 @@ import Draft
 import MeshPart
 import numpy as np
 import heapq
+from decorator import time_function
+import breeder_blanket_model_maker
 
+logtime_data= []
 
-
-def make_cylinder_slice(angle=10):
+@time_function(logtime_data)
+def make_cylinder_slice(log_time=logtime_data,angle=10):
         radius = 20000
         height = 15000
 
@@ -30,13 +33,13 @@ def make_cylinder_slice(angle=10):
         # cylinder_slice.exportStep(output_folder_stp+"cylinder_slice.stp")
         return cylinder_slice
 
+@time_function(logtime_data)
 def components(dictionary_of_parts):
     return dictionary_of_parts
     #return self.dictionary_of_parts
 
 
-
-
+@time_function(logtime_data)
 def save_components_as_stl(dictionary_of_parts,output_folder):
 
     try:
@@ -57,7 +60,6 @@ def save_components_as_stl(dictionary_of_parts,output_folder):
             solid_mesh = MeshPart.meshFromShape(solid, LinearDeflection=0.01)
             stl_filename= os.path.join(output_folder,os.path.splitext(os.path.split(file)[1])[0]+'_'+str(file_counter)+'.stl')
             filename_list.append(stl_filename)
-            print('writing ',stl_filename)
             solid_mesh.write(stl_filename)
             file_counter=file_counter+1
         if len(multipart_step.Solids)==0:
@@ -65,22 +67,22 @@ def save_components_as_stl(dictionary_of_parts,output_folder):
             solid_mesh = MeshPart.meshFromShape(singlepart_step, LinearDeflection=0.01)
             stl_filename = os.path.join(output_folder,os.path.splitext(os.path.split(file)[1])[0] + '_' + str(file_counter) + '.stl')
             filename_list.append(stl_filename)
-            print('writing ',stl_filename)
             solid_mesh.write(stl_filename)
             file_counter=file_counter+1
 
         dictionary_of_parts[component]['stl_filename']=filename_list
+    return dictionary_of_parts
 
+@time_function(logtime_data)
 def fuse_compound_of_solids(all):
     starting_part = all.Solids[0]  # Part.makeSolid(Part.Shape)
     list_of_solids = []
     for solid in all.Solids[1:]:
-        print(solid.Volume)
         list_of_solids.append(solid)
-
         starting_part = starting_part.fuse(solid)
     return starting_part
 
+@time_function(logtime_data)
 def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''):
 
     try:
@@ -90,10 +92,6 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
 
     for component in dictionary_of_parts:
         dictionary_of_parts[component]['step_filename'] = os.path.join(output_folder,component +filename_prefix+ '.step')
-        print(dictionary_of_parts[component])
-        print(dictionary_of_parts[component]['step_filename'])
-        print(dictionary_of_parts[component]['part'])
-
 
         component_compound = Part.makeCompound(dictionary_of_parts[component]['part'])
 
@@ -104,12 +102,36 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
         else:
             
             component_compound_sliced_with_cylinder = component_compound.common(make_cylinder_slice(angle=10))
-            # todo
-            # allow different angles to be input
-            print("dictionary_of_parts[component]['step_filename']",dictionary_of_parts[component]['step_filename'])
+            # todo allow different angles to be input
             component_compound_sliced_with_cylinder.exportStep(dictionary_of_parts[component]['step_filename'])
     return dictionary_of_parts
 
+
+@time_function(logtime_data)
+def read_in_envelope_file(envelope_directory_filename):
+
+    # currently this function works for both ipython shells and terminal by finding the path in a varity of ways. Another method would be to use the below code
+    # try:
+    #     __IPYTHON__
+    # except NameError:
+    #     #print "Not in IPython"
+    # else:
+    #     #print "In IPython"
+
+    if os.path.isfile(os.path.join(os.path.dirname(breeder_blanket_model_maker.__file__),envelope_directory_filename)):
+      envelope = Part.read(os.path.join(os.path.dirname(breeder_blanket_model_maker.__file__),envelope_directory_filename))
+    #not needed as path is found through the import breeder_blanket_model_maker.__file__
+    # elif os.path.isfile(envelope_directory_filename):
+    #   envelope = Part.read(envelope_directory_filename)
+    # elif os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),envelope_directory_filename)):
+    #   envelope = Part.read(os.path.join(os.path.dirname(os.path.realpath(__file__)),envelope_directory_filename))
+    else:
+      raise ValueError('Input envelope file was not found')
+    return envelope
+
+
+
+@time_function(logtime_data)
 def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
     # this does not work at the moment
     #os.environ["CUBIT_PLUGIN_DIR"] = '/opt/Trelis-16.4/bin/plugins/svalinn/'
@@ -128,15 +150,19 @@ def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
     aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
 
 
-    os.system('rm *.jou')
+    os.system('rm cubit*.jou')
     os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
-    print('trelis convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    os.system('/opt/Trelis-16.4/bin/trelis  -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
-    print('trelis h5m done')
+    path_to_trelis_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'convert_step_files_to_h5m_with_trelis.py')
+
+    #print('trelis '+path_to_trelis_script+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+
+    os.system('trelis -nographics -batch '+path_to_trelis_script+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+
+    #print('trelis h5m done')
 
 
+@time_function(logtime_data)
 def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket_type):
     #os.environ["CUBIT_PLUGIN_DIR"] ='/opt/Trelis-16.4/bin/plugins/svalinn/'
     try:
@@ -154,18 +180,20 @@ def save_components_as_merged_stl_file(dictionary_of_parts,output_folder,blanket
     aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
 
 
-    os.system('rm *.jou')
-    print('trelis -nographics -batch convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    success = os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_stl_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
-    #os.system('/opt/Trelis-16.4/bin/trelis -nographics -batch geometry_utils/convert_step_files_to_h5m_with_trelis.py'+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('rm cubit*.jou')
+    path_to_trelis_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'convert_step_files_to_stl_with_trelis.py')
 
-    print('trelis merged stl done')
+    #print('trelis -nographics -batch '+path_to_trelis_script +aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    success = os.system('trelis -nographics -batch '+ path_to_trelis_script +aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
+    #print('trelis merged stl done')
+    
     if success == 0:
         return True
     else:
         return False
 
+@time_function(logtime_data)
 def find_common_bodies(chopper,chopped):
     common_parts=[]
     un_common_parts=[]
@@ -182,6 +210,7 @@ def find_common_bodies(chopper,chopped):
 
     return common_parts,un_common_parts
 
+@time_function(logtime_data)
 def chop_off_first_wall(faces_not_in_first_wall,thickness,filleted_envelope):
 
 
@@ -191,6 +220,7 @@ def chop_off_first_wall(faces_not_in_first_wall,thickness,filleted_envelope):
 
     return first_wall, smaller_filleted_envelope
 
+@time_function(logtime_data)
 def chop_off_first_wall_armour(armour_thickness,faces_not_in_first_wall,filleted_envelope,front_face):
 
 
@@ -208,8 +238,8 @@ def chop_off_first_wall_armour(armour_thickness,faces_not_in_first_wall,filleted
 
     return armour, smaller_filleted_envelope
 
+@time_function(logtime_data)
 def envelope_front_face_id(wedge,envelope_back_face):
-    print('Finding front face for this wedge ')
     largest_distance = 0
     for counter, face in enumerate(wedge.Faces):
         distance = face.distToShape(envelope_back_face)[0]
@@ -218,34 +248,35 @@ def envelope_front_face_id(wedge,envelope_back_face):
             furthest_face = face
             furthest_face_id = counter
     if not furthest_face:
-        print('Front face not found')
+        #print('Front face not found')
         return None
     return furthest_face_id
 
+@time_function(logtime_data)
 def find_front_face_polodial_edges_to_fillet(edges_under_consideration):
     list_of_edges_to_fillet = []
     list_of_edge_to_fillet_ids = []
 
-    for counter, edge in enumerate(edges_under_consideration): #self.envelope_front_face.Edges
-        #print('        z_diff=', round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z))
+    for counter, edge in enumerate(edges_under_consideration): 
         if round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z) != 0:
             list_of_edges_to_fillet.append(edge)
             list_of_edge_to_fillet_ids.append(counter)
 
     return list_of_edges_to_fillet
 
+@time_function(logtime_data)
 def find_front_face_torodial_edges_to_fillet(edges_under_consideration):
     list_of_edges_to_fillet = []
     list_of_edge_to_fillet_ids = []
 
     for counter, edge in enumerate(edges_under_consideration):
-        #print('        z_diff=', round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z))
         if round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z) == 0:
             list_of_edges_to_fillet.append(edge)
             list_of_edge_to_fillet_ids.append(counter)
 
     return list_of_edges_to_fillet
 
+@time_function(logtime_data)
 def find_poloidal_upper_and_lower_faces(front_face,back_face,envelope,envelope_front_face_id,envelope_back_face_id):
 
     list_of_edges_to_fillet = []
@@ -253,57 +284,46 @@ def find_poloidal_upper_and_lower_faces(front_face,back_face,envelope,envelope_f
     list_of_edge_to_fillet_lengths=[]
 
     for counter, edge in enumerate(front_face.Edges):
-        #print('        z_diff=', round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z))
         if round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z) == 0:
             list_of_edges_to_fillet.append(edge)
             list_of_edge_to_fillet_ids.append(counter)
             list_of_edge_to_fillet_lengths.append(edge.Length)
 
     for counter, edge in enumerate(back_face.Edges):
-        #print('        z_diff=', round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z))
         if round(edge.Vertexes[0].Point.z - edge.Vertexes[1].Point.z) == 0:
             list_of_edges_to_fillet.append(edge)
             list_of_edge_to_fillet_ids.append(counter)
             list_of_edge_to_fillet_lengths.append(edge.Length)
 
-    print('list_of_edges_to_fillet',list_of_edges_to_fillet)
-    print('list_of_edge_to_fillet_ids',list_of_edge_to_fillet_ids)
-
     faces_with_vectors_not_pointing_in_y = []
 
     for i, face in enumerate(envelope.Faces):
         if i != envelope_front_face_id and i != envelope_back_face_id:
-            print(face.normalAt(0, 0))
+            #print(face.normalAt(0, 0))
             if abs(face.normalAt(0, 0).y) < max(abs(face.normalAt(0, 0).x), abs(face.normalAt(0, 0).z)):
                 faces_with_vectors_not_pointing_in_y.append(face)
-                print('appending top bottom face', face.normalAt(0, 0))
+
 
     if len(faces_with_vectors_not_pointing_in_y) == 2:
-        print('faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z', faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z)
         if faces_with_vectors_not_pointing_in_y[0].CenterOfMass.z > faces_with_vectors_not_pointing_in_y[1].CenterOfMass.z:
 
             return faces_with_vectors_not_pointing_in_y
         else:
             return faces_with_vectors_not_pointing_in_y[::-1]
     else:
-        print('method of finding top bottom faces failed, trying method 2, to many or few faces found')
-
         top_bottom_faces=[]
 
         for i, face in enumerate(envelope.Faces):
             if i != self.envelope_front_face_id and i!= self.envelope_back_face_id:
-
-                print('new face')
                 list_of_z_points=[]
                 for vertexes in face.Vertexes:
                     list_of_z_points.append(round(vertexes.Point.z,1))
-                    print('   ',vertexes.Point.z)
-                print(list_of_z_points)
+                    #print('   ',vertexes.Point.z)
+                #print(list_of_z_points)
                 number_of_matching_z_points = Counter(list_of_z_points)
 
 
                 if number_of_matching_z_points.values() ==[2,2] or number_of_matching_z_points.values() ==[4]:
-                    print('pass z')
 
                     top_bottom_faces.append(face)
 
@@ -311,8 +331,6 @@ def find_poloidal_upper_and_lower_faces(front_face,back_face,envelope,envelope_f
 
         if len(top_bottom_faces)==2:
 
-            # return top_bottom_faces
-            print('top_bottom_faces[0].CenterOfMass',top_bottom_faces[0].CenterOfMass)
             if top_bottom_faces[0].CenterOfMass.Point.z > top_bottom_faces[1].CenterOfMass.Point.z:
                 return top_bottom_faces
             else:
@@ -320,18 +338,19 @@ def find_poloidal_upper_and_lower_faces(front_face,back_face,envelope,envelope_f
 
         else:
 
-            print('method failed, on '+self.envelope_directory_filename+' to many or few faces found')
-            print(top_bottom_faces)
+
             Part.makeCompound(top_bottom_faces).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces.step'))
             Part.makeCompound([front_face]).exportStep(os.path.join(self.output_folder,'error_top_bottom_faces_ff.step'))
 
-            sys.exit()
+            raise ValueError('method failed, on '+self.envelope_directory_filename+' to many or few faces found')
 
+@time_function(logtime_data)
 def filleted_envelope(fillet_radius,edges,envelope):
 
     wedge_filleted = envelope.makeFillet(fillet_radius,edges)
     return wedge_filleted
 
+@time_function(logtime_data)
 def find_end_cap_faces(faces_under_consideration):
     list_of_top_bottom_faces = []
     list_of_top_bottom_face_ids = []
@@ -340,7 +359,7 @@ def find_end_cap_faces(faces_under_consideration):
 
     for counter, face in enumerate(faces_under_consideration):
         if len(face.Edges) == 6:
-            print('found end cap face', face)
+            #print('found end cap face', face)
 
             if len(list_of_top_bottom_faces) > 0:
                 z_value_of_this_face = face.Vertexes[0].Point.z
@@ -368,6 +387,7 @@ def find_end_cap_faces(faces_under_consideration):
 
     return list_of_top_bottom_faces
 
+@time_function(logtime_data)
 def chop_of_end_caps(end_cap_faces,end_cap_thickness,envelope):
 
     end_cap_1 = end_cap_faces[0]
@@ -385,17 +405,18 @@ def chop_of_end_caps(end_cap_faces,end_cap_thickness,envelope):
 
     return  [common_end_cap_1,common_end_cap_2],envelope_end_caps_removed
 
+@time_function(logtime_data)
 def chop_off_back_walls(back_face,remaining_shapes,back_walls_thicknesses):
 
     back_face.scale(2.0, back_face.CenterOfMass)
 
     list_of_back_walls=[]
     cumlative_counter = 0
-    print('back_walls_thicknesses',back_walls_thicknesses)
+    #print('back_walls_thicknesses',back_walls_thicknesses)
 
     for key in back_walls_thicknesses:
         distance = back_walls_thicknesses[key]
-        print('back face distance = ',distance)
+        #print('back face distance = ',distance)
 
         #start_length = cumlative_counter
         cumlative_counter = cumlative_counter + distance
@@ -416,6 +437,7 @@ def chop_off_back_walls(back_face,remaining_shapes,back_walls_thicknesses):
 
     return list_of_back_walls ,remaining_shapes # self.envelope_removed_endcaps.cut(Part.makeCompound(list_of_back_walls))
 
+@time_function(logtime_data)
 def find_front_face_midpoint(front_face):
     an_index = 3
     list_of_all_z_vertexis = front_face.Vertexes[0].Point.z, front_face.Vertexes[1].Point.z, front_face.Vertexes[2].Point.z
@@ -444,6 +466,7 @@ def find_front_face_midpoint(front_face):
 
     return midpoint
 
+@time_function(logtime_data)
 def common_and_uncommon_solids_with_envelope(list_of_solids, slice):
     list_of_common_solids = []
     list_of_not_common_solids = []
@@ -454,11 +477,12 @@ def common_and_uncommon_solids_with_envelope(list_of_solids, slice):
         list_of_not_common_solids.append(solid.cut(slice))
     return list_of_common_solids,list_of_not_common_solids
 
+@time_function(logtime_data)
 def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_bottom_edges,front_face):
     poloidal_segmentations_list=[]
     for key in poloidal_segmentations:
         poloidal_segmentations_list.append(poloidal_segmentations[key])
-        print(poloidal_segmentations[key])
+        #print(poloidal_segmentations[key])
     #sys.exit()
 
     longest = 0
@@ -466,7 +490,7 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
         if edge.Length > longest:
             longest = edge.Length
             longest_edge = edge
-    print('longest length is ', longest_edge.Length)
+    #print('longest length is ', longest_edge.Length)
 
     number_of_steps = int(math.ceil(  len(poloidal_segmentations_list)*((longest_edge.Length*1.15)/ sum(poloidal_segmentations_list)  )))
 
@@ -483,19 +507,19 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
     poly_face = Part.Face(poly)
 
     if method =='HCPB':
-        print('HCPB selected, treading the triangular corners differently')
+        #print('HCPB selected, treading the triangular corners differently')
 
         slices_of_blanket1=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths1,face=poly_face,envelope=envelope,backtrack_id=4,offset=0)
         slices_of_blanket2=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths2, face=poly_face,envelope=envelope,backtrack_id=4,offset=0)
 
     if method == 'WCLL':
-        print(' WCLL selected, treading the triangular corners differently')
+        #print(' WCLL selected, treading the triangular corners differently')
 
         slices_of_blanket1 = exstrude_and_cut_solids_up_to_change_in_shape_WCLL(list_of_distances=cumlative_extrusion_lengths1, face=poly_face,envelope=envelope,backtrack_id=4,offset=1)
         slices_of_blanket2 = exstrude_and_cut_solids_up_to_change_in_shape_WCLL(list_of_distances=cumlative_extrusion_lengths2, face=poly_face,envelope=envelope,backtrack_id=4,offset=1)
 
     if method =='first_wall':
-        print('first wall selected, treading the triangular corners differently')
+        #print('first wall selected, treading the triangular corners differently')
 
         slices_of_blanket1=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths1, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
         slices_of_blanket2=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths2, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
@@ -538,12 +562,13 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
 
     return collection_of_solids
 
+@time_function(logtime_data)
 def find_largest_face(solid_or_list_of_faces,n=1):
     if type(solid_or_list_of_faces) == list:
-        print('a list')
+        #print('a list')
         list_of_faces = solid_or_list_of_faces
     else:
-        print('not a list')
+        #print('not a list')
         list_of_faces = solid_or_list_of_faces.Faces
 
     face_sizes=[]
@@ -552,7 +577,7 @@ def find_largest_face(solid_or_list_of_faces,n=1):
         face_sizes.append(face.Area)
         face_ids.append(face_id)
 
-    print('face_sizes',face_sizes)
+    #print('face_sizes',face_sizes)
     largest_size = heapq.nlargest(n, face_sizes)[-1]
 
     index_to_return = face_sizes.index(largest_size)
@@ -561,9 +586,10 @@ def find_largest_face(solid_or_list_of_faces,n=1):
     return list_of_faces[index_to_return] , face_ids[index_to_return]
 
 
+@time_function(logtime_data)
 def chop_top_and_bottom_from_cooling_plate(plate, channel_poloidal_height,plate_poloidal_height):
 
-    print('plate',plate)
+    #print('plate',plate)
 
     largest_face, largest_face_id=find_largest_face(plate)
 
@@ -591,6 +617,7 @@ def chop_top_and_bottom_from_cooling_plate(plate, channel_poloidal_height,plate_
     return skinny_div_to_cool, top_bottom
 
 
+@time_function(logtime_data)
 def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_height,plate_poloidal_height,plasma):
 
     middle, top_bottom = chop_top_and_bottom_from_cooling_plate(plate=div_to_cool,
@@ -605,11 +632,11 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
     back_face = find_envelope_back_face(div_to_cool,plasma)
     back_face_id = find_envelope_back_face_id(div_to_cool,plasma)
 
-    print('face ids ',largest_face_id,second_largest_face_id,back_face_id)
+    #print('face ids ',largest_face_id,second_largest_face_id,back_face_id)
 
     #faces_not_in_first_wall = [div_to_cool.Faces[largest_face_id],div_to_cool.Faces[second_largest_face_id],div_to_cool.Faces[back_face_id]]
     faces_not_in_first_wall = [largest_face,back_face,second_largest_face]
-    print(faces_not_in_first_wall)
+    #print(faces_not_in_first_wall)
     
     #print('poloidal_cooling_plate_mm',poloidal_cooling_plate_mm)
 
@@ -617,22 +644,22 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
     for c in range(34):#must be and even number to make sure pipe has both front back walls
         if c % 2 == 0:
             step_list.append(step_list[c]+10+c)
-            print(step_list[c]+10+(c*1.5))
+            #print(step_list[c]+10+(c*1.5))
         else:
             step_list.append(step_list[c]+channel_radial_height)
-    print('step_list',step_list)
-    print('faces_not_in_first_wall',faces_not_in_first_wall)
+    #print('step_list',step_list)
+    #print('faces_not_in_first_wall',faces_not_in_first_wall)
 
     list_of_cooling_pipes=[]
     list_of_structure=[]
 
     try:
         for counter, step in enumerate(step_list[1:]):
-            print(counter,step)
+            #print(counter,step)
 
             #cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
             cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
-            print(counter,cooling_solid.Volume)
+            #print(counter,cooling_solid.Volume)
 
 
             if counter==0:
@@ -659,7 +686,8 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
 
             previous_solid=cooling_solid
     except:
-        print('error the end of the cooling channels has been reached')
+        pass
+        #print('error the end of the cooling channels has been reached')
 
     list_of_structure.append(middle.cut(cooling_solid))
     list_of_structure.append(top_bottom)
@@ -668,8 +696,9 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
     return list_of_cooling_pipes,list_of_structure
 
 
+@time_function(logtime_data)
 def chop_up_toroidally(toroidal_segmentations,envelope,front_face_torodial_edges_to_fillet,front_face,number_required=1000): # settings,list_of_envelopes, list_of_front_faces,stp, stl):
-    print('chopping up toroidally')
+    #print('chopping up toroidally')
     toroidal_segmentations_list=[]
     for key in toroidal_segmentations:
         #print(toroidal_segmentations[key])
@@ -678,7 +707,7 @@ def chop_up_toroidally(toroidal_segmentations,envelope,front_face_torodial_edges
 
     top_bottom_edges = front_face_torodial_edges_to_fillet
 
-    print('top_bottom_edges com',top_bottom_edges[0].CenterOfMass)
+    #print('top_bottom_edges com',top_bottom_edges[0].CenterOfMass)
 
     point1 = top_bottom_edges[0].CenterOfMass
     point2 = FreeCAD.Vector(point1 + front_face.normalAt(0, 0)*3000)
@@ -708,9 +737,10 @@ def chop_up_toroidally(toroidal_segmentations,envelope,front_face_torodial_edges
 
     #Part.makeCompound(toroidal_lithium_lead).exportStep(os.path.join(settings.output_folder_stp, 'toroidal_lithium_lead.step'))
     #Part.makeCompound(toroidal_cooling_plates).exportStep(os.path.join(settings.output_folder_stp, 'toroidal_cooling_plates.step'))
-    print('finished chopping up toroidally')
+    #print('finished chopping up toroidally')
     return [toroidal_lithium_lead,toroidal_cooling_plates]
 
+@time_function(logtime_data)
 def chop_up_envelope_zone_radially(radial_segmentations,front_face,envelope,number_required=1000):  # (settings, list_of_remaining_shapes, list_of_front_faces):
 
 
@@ -726,11 +756,12 @@ def chop_up_envelope_zone_radially(radial_segmentations,front_face,envelope,numb
         collection_of_solids.append(slices_of_blanket[counter::len(radial_segmentations)] + slices_of_blanket[counter::len(radial_segmentations)])
     return collection_of_solids
 
+@time_function(logtime_data)
 def chop_up_envelope_zone_radially_with_adjustable_rear_division(envelope_radial_depth,thinnest_two_layer_blanket,front_face,radial_segmentations,envelope):  # (settings, list_of_remaining_shapes, list_of_front_faces):
 
 
-    print('this blanket is ',envelope_radial_depth , 'mm')
-    print('thinnest_two_layer_blanket is ',thinnest_two_layer_blanket , 'mm')
+    #print('this blanket is ',envelope_radial_depth , 'mm')
+    #print('thinnest_two_layer_blanket is ',thinnest_two_layer_blanket , 'mm')
     if envelope_radial_depth > thinnest_two_layer_blanket:
         number_required=5 #maxvalue
     else:
@@ -744,7 +775,7 @@ def chop_up_envelope_zone_radially_with_adjustable_rear_division(envelope_radial
         cumlative_distance_list[-2] = (cumlative_distance_list[1] + ((envelope_radial_depth  - cumlative_distance_list[1])/2)) - radial_segmentations[-1]
         cumlative_distance_list[-3] = cumlative_distance_list[-2] - radial_segmentations[-1]
 
-        print('modified cumlative_distance_list', cumlative_distance_list)
+        #print('modified cumlative_distance_list', cumlative_distance_list)
 
     if number_required==3:
         cumlative_distance_list=[]
@@ -763,6 +794,7 @@ def chop_up_envelope_zone_radially_with_adjustable_rear_division(envelope_radial
         collection_of_solids.append(slices_of_blanket[counter::len(radial_segmentations)])# + slices_of_blanket[counter::len(self.radial_segmentations)])
     return collection_of_solids
 
+@time_function(logtime_data)
 def convert_distances_into_cumlative_distances(distances, number_of_distances, half_first_layer=False):
     distance_list = []
 
@@ -789,6 +821,7 @@ def convert_distances_into_cumlative_distances(distances, number_of_distances, h
     #print('cumlative_distance_list', cumlative_distance_list)
     return cumlative_distance_list
 
+@time_function(logtime_data)
 def exstrude_and_cut_solids(list_of_distances,face,envelope):
     large_face = face
     large_face.scale(2.0, large_face.CenterOfMass)
@@ -811,6 +844,7 @@ def exstrude_and_cut_solids(list_of_distances,face,envelope):
 
     return list_of_thick_faces
 
+@time_function(logtime_data)
 def exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances, face, envelope, backtrack_id,offset):
     large_face = face
     large_face.scale(2.0, large_face.CenterOfMass)
@@ -830,12 +864,12 @@ def exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances, face, envel
             if (counter +offset)% backtrack_id == 0:
                 #print('first layer repeate', list_of_distances[counter])
                 previous_neutron_multiplier_layer = counter
-        print(counter,remaining_thick_face.Volume)
+        #print(counter,remaining_thick_face.Volume)
         if remaining_thick_face.Volume == 0:
-            print('zero volume found, no longer exstruding')
+            #print('zero volume found, no longer exstruding')
             break
         if len(remaining_thick_face.Faces) != number_of_faces_in_each_sweep:
-            print('solids have got the wrong number of faces, no longer exstruding')
+            #print('solids have got the wrong number of faces, no longer exstruding')
             break
         list_of_thick_faces.append(remaining_thick_face)
 
@@ -853,6 +887,7 @@ def exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances, face, envel
 
     return list_of_thick_faces
 
+@time_function(logtime_data)
 def exstrude_and_cut_solids_up_to_change_in_shape_WCLL(list_of_distances, face, envelope, backtrack_id,offset):
     large_face = face
     large_face.scale(2.0, large_face.CenterOfMass)
@@ -870,23 +905,23 @@ def exstrude_and_cut_solids_up_to_change_in_shape_WCLL(list_of_distances, face, 
             remaining_thick_face = remaining_thick_face.common(envelope)
 
         if remaining_thick_face.Volume == 0:
-            print('zero volume found, no longer exstruding')
+            #print('zero volume found, no longer exstruding')
             break
         if len(remaining_thick_face.Faces) != number_of_faces_in_each_sweep:
-            print('solids have got the wrong number of faces, no longer exstruding')
+            #print('solids have got the wrong number of faces, no longer exstruding')
             break
         list_of_thick_faces.append(remaining_thick_face)
 
-    print('number of wcll layers before', len(list_of_thick_faces))
+    #print('number of wcll layers before', len(list_of_thick_faces))
     if len(list_of_thick_faces)%2==0:  #even
-        print('even, removing one layer')
+        #print('even, removing one layer')
         list_of_thick_faces = list_of_thick_faces[:-1]
     if (len(list_of_thick_faces)+1) % 4 != 0:  # this is a long layer, we can't end with this
-        print('long, removing two layers')
+        #print('long, removing two layers')
         list_of_thick_faces = list_of_thick_faces[:-2]
 
 
-    print('number of wcll layers  after', len(list_of_thick_faces))
+    #print('number of wcll layers  after', len(list_of_thick_faces))
 
     both_end_caps = envelope.cut(list_of_thick_faces[-1]).Solids
 
@@ -898,8 +933,9 @@ def exstrude_and_cut_solids_up_to_change_in_shape_WCLL(list_of_distances, face, 
 
     return list_of_thick_faces
 
+@time_function(logtime_data)
 def find_envelope_back_face(wedge,plasma):
-    print('Finding face furthest from the plasma for ',wedge)
+    #print('Finding face furthest from the plasma for ',wedge)
     largest_distance = 0
 
     #for counter, face in enumerate(self.envelope.Faces):
@@ -910,12 +946,13 @@ def find_envelope_back_face(wedge,plasma):
             furthest_face = face
             furthest_face_id = counter
     if not furthest_face:
-        print('Back face not found')
+        #print('Back face not found')
         return None
     return wedge.Faces[furthest_face_id]
 
+@time_function(logtime_data)
 def find_envelope_back_face_id(wedge,plasma):
-    print('Finding face furthest from the plasma for ',wedge)
+    #print('Finding face furthest from the plasma for ',wedge)
     largest_distance = 0
 
     #for counter, face in enumerate(self.envelope.Faces):
@@ -926,12 +963,13 @@ def find_envelope_back_face_id(wedge,plasma):
             furthest_face = face
             furthest_face_id = counter
     if not furthest_face:
-        print('Back face not found')
+        #print('Back face not found')
         return None
     return furthest_face_id
 
+@time_function(logtime_data)
 def find_envelope_front_face(wedge,back_face):
-    print('Finding front face for ' ,wedge)
+    #print('Finding front face for ' ,wedge)
     largest_distance = 0
     if not back_face :
         back_face=find_envelope_back_face(wedge)
@@ -943,7 +981,8 @@ def find_envelope_front_face(wedge,back_face):
             furthest_face = face
             furthest_face_id = counter
     if not furthest_face:
-        print('Front face not found')
+        #print('Front face not found')
         return None
     return furthest_face
+
 

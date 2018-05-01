@@ -13,7 +13,7 @@ from setuptools import setup
 
 
 setup(name='breeder_blanket_model_maker',
-      version='0.002',
+      version='0.003',
       summary='Package for making 3D parametric breeder blanket models',
       description='Input blanket envelopes and retrive detailed blanket geometry',
       url='https://github.com/ukaea/breeder_blanket_model_maker',
@@ -21,9 +21,9 @@ setup(name='breeder_blanket_model_maker',
       author_email='jonathan.shimwell@ukaea.uk',
       license='Apache 2.0',
       packages=['breeder_blanket_model_maker','examples'],
-      test_suite='testsuite', # works in python 2
+      test_suite='tests.testsuite', # works in python 2
       #test_suite='tests.testsuite', # does not work within a folder in python 2
-      zip_safe=True,
+      zip_safe=False,
       package_data={'':['requirements.txt', 'README.md','README.md.html', 'LICENSE','sample_envelope_1.step','sample_envelope_2.step']},
       #install_requires=requirements,
       #setup_requires=['pytest-runner'],
