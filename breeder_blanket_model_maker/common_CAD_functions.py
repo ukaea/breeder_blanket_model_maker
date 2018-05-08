@@ -20,6 +20,7 @@ import numpy as np
 import heapq
 from decorator import time_function
 import breeder_blanket_model_maker
+import pkg_resources
 
 logtime_data= []
 
@@ -110,21 +111,12 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
 @time_function(logtime_data)
 def read_in_envelope_file(envelope_directory_filename):
 
-    # currently this function works for both ipython shells and terminal by finding the path in a varity of ways. Another method would be to use the below code
-    # try:
-    #     __IPYTHON__
-    # except NameError:
-    #     #print "Not in IPython"
-    # else:
-    #     #print "In IPython"
+    
 
-    if os.path.isfile(os.path.join(os.path.dirname(breeder_blanket_model_maker.__file__),envelope_directory_filename)):
-      envelope = Part.read(os.path.join(os.path.dirname(breeder_blanket_model_maker.__file__),envelope_directory_filename))
-    #not needed as path is found through the import breeder_blanket_model_maker.__file__
-    # elif os.path.isfile(envelope_directory_filename):
-    #   envelope = Part.read(envelope_directory_filename)
-    # elif os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),envelope_directory_filename)):
-    #   envelope = Part.read(os.path.join(os.path.dirname(os.path.realpath(__file__)),envelope_directory_filename))
+    if os.path.isfile(envelope_directory_filename):
+      envelope = Part.read(envelope_directory_filename)
+    elif os.path.isfile(pkg_resources.resource_filename('breeder_blanket_model_maker',envelope_directory_filename)):
+      envelope = Part.read(pkg_resources.resource_filename('breeder_blanket_model_maker',envelope_directory_filename))
     else:
       raise ValueError('Input envelope file was not found')
     return envelope
@@ -436,6 +428,39 @@ def chop_off_back_walls(back_face,remaining_shapes,back_walls_thicknesses):
         #self.dictionary_of_parts[key]['part'] = [common_end_cap_1, common_end_cap_2]
 
     return list_of_back_walls ,remaining_shapes # self.envelope_removed_endcaps.cut(Part.makeCompound(list_of_back_walls))
+
+@time_function(logtime_data)
+def chop_off_back_plates(back_face,remaining_shapes,back_plates_thicknesses):
+
+    back_face.scale(2.0, back_face.CenterOfMass)
+
+    list_of_back_walls=[]
+    cumlative_counter = 0
+    #print('back_walls_thicknesses',back_walls_thicknesses)
+
+    for key in back_plates_thicknesses:
+        distance = back_plates_thicknesses[key]
+        #print('back face distance = ',distance)
+
+        #start_length = cumlative_counter
+        cumlative_counter = cumlative_counter + distance
+        stop_length = cumlative_counter
+
+        back_face_exstruded = back_face.extrude(back_face.normalAt(0, 0) * -1*stop_length)
+
+        new_shape = back_face_exstruded.common(remaining_shapes)
+
+        #self.dictionary_of_parts[key]['part'] = new_shape
+
+        list_of_back_walls.append(new_shape)
+
+        remaining_shapes=remaining_shapes.cut(back_face_exstruded)
+
+
+        #self.dictionary_of_parts[key]['part'] = [common_end_cap_1, common_end_cap_2]
+
+    return list_of_back_walls ,remaining_shapes # self.envelope_removed_endcaps.cut(Part.makeCompound(list_of_back_walls))
+
 
 @time_function(logtime_data)
 def find_front_face_midpoint(front_face):

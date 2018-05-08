@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
 
-      - image: shimwell/breeder_blanket_model_maker_dependencies
+      - image: ukaea/breeder_blanket_model_maker_dependencies
       
 
     working_directory: ~/repo

@@ -49,10 +49,8 @@ def generate_CAD_model(blanket_type):
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)
 
-    p = multiprocessing.Pool(multiprocessing.cpu_count()-1)
 
-    if blanket_type=='HCPB':
-        detailed_modules_parts = p.map(HCPB_detailed_module,list_of_compressed_arguments)
+    detailed_modules_parts = detailed_module(list_of_compressed_arguments)
 
     return detailed_modules_parts
 

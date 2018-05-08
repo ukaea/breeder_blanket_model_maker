@@ -1,7 +1,7 @@
 import sys
 sys.dont_write_bytecode = True
 from collections import OrderedDict
-import multiprocessing
+
 
 from breeder_blanket_model_maker import *
 
@@ -50,12 +50,11 @@ def generate_CAD_model(blanket_type):
 
         }
 
-    if blanket_type == 'WCLL':
+
         list_of_compressed_arguments.append(blanket_geometry_parameters)
 
-    p = multiprocessing.Pool(multiprocessing.cpu_count()-1)
 
-    detailed_modules_parts = p.map(WCLL_detailed_module,list_of_compressed_arguments)
+    detailed_modules_parts = detailed_module(list_of_compressed_arguments)
 
     return detailed_modules_parts
 
