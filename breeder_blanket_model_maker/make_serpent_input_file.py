@@ -1,31 +1,9 @@
 import sys, re, os
 from neutronics_material_maker import *
+from collections import Counter
+import collections
+from collections import OrderedDict
 
-
-
-def return_parts_from_directory(output_folder_stl,material_dictionary):
-    bodies = {}
-    all_files = os.listdir(output_folder_stl)
-    files_found= []
-
-    for file_name in all_files:
-        if file_name.endswith('.stl'):
-            files_found.append(file_name)
-
-    print "files found:", files_found
-    for prefix in material_dictionary:
-        for file in files_found:
-            if bool(re.match(prefix, file, re.I)):
-                print "looking for prefix =", prefix.lower(), ' FINDING ', material_dictionary[prefix.lower()]
-                new_part = (prefix, file, material_dictionary[prefix.lower()])
-                if prefix in bodies:
-                    bodies[prefix].append(new_part)
-                else:
-                    bodies[prefix] = [new_part]
-    for item in bodies:
-        print(item, bodies[item])
-
-    return bodies
 
 def return_serpent_file_head(include_um_mesh):
     lines_for_file=[]
@@ -45,9 +23,11 @@ def return_serpent_file_head(include_um_mesh):
 
     if include_um_mesh==True:
         lines_for_file.append('cell 10    0 fill=all_um_geometry   -999 ')
+
     lines_for_file.append('\n\n%background universe cell = void')
     lines_for_file.append('cell 2000  bg_for_stl void -998 % background universe number 2')
     lines_for_file.append('\n\n')
+
     if include_um_mesh==True:
 
         lines_for_file.append('solid 1 all_um_geometry bg_for_stl')
@@ -68,7 +48,7 @@ def return_serpent_file_head(include_um_mesh):
 
     return lines_for_file
 
-def return_serpent_file_stl_parts(parts,material_dictionary,output_folder_stl,output_folder):
+def return_serpent_file_stl_parts(components,material_dictionary,output_folder_stl,output_folder):
 
 
     print(output_folder_stl)
@@ -81,26 +61,30 @@ def return_serpent_file_stl_parts(parts,material_dictionary,output_folder_stl,ou
 
     lines_for_file = []
     #number_of_stl_parts=0
-    for component in parts:
+    for component in components:
         # print(component)
         # if component['stl']==True:
         print('body ' + component + '-b ' + component + '-c ')
         lines_for_file.append('body ' + component + '-b ' + component + '-c ' + material_dictionary[component].material_card_name)
-        for stl_filepath in parts[component]['stl_filename']:
-            stl_filename = os.path.split(stl_filepath)[-1]
-            stl_filename_base = os.path.splitext(stl_filename)[0]
-            #print('stl_filename',stl_filename)
-            #print('stl_filename_base',stl_filename_base)
+        for part in components[component]:
+            stl_filepaths = part['stl_filename']
+            for stl_filepath in stl_filepaths:
+                stl_filename = os.path.split(stl_filepath)[-1]
+                stl_filename_base = os.path.splitext(stl_filename)[0]
+                # print('stl_filepath',stl_filepath)
+                # print('stl_filename',stl_filename)
+                # print('stl_filename_base',stl_filename_base)
 
 
-            relative_filepath = os.path.join(relative_dir, stl_filename)
-            lines_for_file.append('    file ' + component + '-b "' + relative_filepath + '" 0.1 0 0 0  ')
+                relative_filepath = os.path.join(relative_dir, stl_filename)
+                lines_for_file.append('    file ' + component + '-b "' + relative_filepath + '" 0.1 0 0 0  ')
+
             #number_of_stl_parts=number_of_stl_parts+1
         lines_for_file.append('\n\n')
 
     return lines_for_file#,number_of_stl_parts
 
-def return_serpent_file_run_params(plot_serpent_geometry,include_photons,nps):
+def return_serpent_file_run_params(plot_serpent_geometry,particle_type,nps):
 
 
     lines_for_file=[]
@@ -114,33 +98,24 @@ def return_serpent_file_run_params(plot_serpent_geometry,include_photons,nps):
     lines_for_file.append('\n\n')
 
     lines_for_file.append("set gcu -1")
-    # # serpent_file += ["set opti 1"] # can be used to limit memory use
+    # # lines_for_file += ["set opti 1"] # can be used to limit memory use
 
-    lines_for_file.append("set lost 1000")  # allows 1000 lost articles
-    lines_for_file.append("set usym sector 3 2 0.0 0.0 0 10")
-    #
-    # # serpent_file += ["set ngamma 1"]
-    # # if run :
-    # #    pass
-    # # serpent_file += ['set pdatadir "' + 'opt/serpent2/photon_data"']
-    # # else :
-    # #    pass
-    # # serpent_file += ['set pdatadir "' +  'opt/serpent2/photon_data"']
+    lines_for_file.append("set lost 100")  # allows for 100 lost particles
+    lines_for_file.append("set usym sector 3 2 0.0 0.0 0 10") #a 10 degree slice with boundary conditions
 
 
-    if include_photons == True:
-         serpent_file += ["set ngamma 2 %analog gamma"]
-         serpent_file += ['set pdatadir "/opt/serpent2/photon_data/"']
-         serpent_file += ['set ekn']
+    if 'p' in particle_type:
+         lines_for_file += ["set ngamma 2 %analog gamma"]
+         lines_for_file += ['set pdatadir "/opt/serpent2/photon_data/"']
+         lines_for_file += ['set ekn']
 
-    nps = nps
+    
     batch_size = min(0.5 * nps, 5000)
     # make batch size 1e4 regardless of nps
     batches = int(nps / batch_size)
     print('nps ', nps)
     print('batch_size ', batch_size)
     print('batches ', batches)
-
 
     lines_for_file.append('set nps ' + str(nps) + ' ' + str(batches) + ' % neutron population, bunch count')
     lines_for_file.append('set outp ' + str(batches + 1) + ' %only prints output after batchs +1, ie at the end')
@@ -156,40 +131,25 @@ def return_serpent_file_run_params(plot_serpent_geometry,include_photons,nps):
 
     return lines_for_file
 
-def return_serpent_macroscopic_tbr_detectors(material_description,list_of_cells_to_tally):
-    detector_name = 'tbr'
-    mtnumber = '-55'
-    particletype='n'
-    
-    
+def return_serpent_macroscopic_detectors(list_of_bodies_to_tally,mt_number,detector_name,particle_type):#,material_description=''):
+  
+    lines_list = []
+    lines_list.append('\n')
+    lines_list.append('% ------------ DETECTOR INPUT (macroscopic) ---------------')
+    lines_list.append('det ' + detector_name + ' ' + particle_type)
+    for body in list_of_bodies_to_tally:
+        lines_list.append("\tdc " + body + "-c")
+    lines_list.append('\tdr '+str(mt_number)+' void') # void can be replaced with the material_description but this is not needed
 
-    detector_cell_string = ""
-    for cell in list_of_cells_to_tally:
-        if list_of_cells_to_tally.index(cell) != len(list_of_cells_to_tally) - 1:
-            detector_cell_string += "\tdc " + cell + "-c\n"
-        else:
-            detector_cell_string += "\tdc " + cell + "-c"
+    return lines_list
 
-    result = []
-    result.append('\n\n')
-    result.append('% ------------ DETECTOR INPUT (macroscopic) ---------------')
-    result.append('det ' + detector_name + ' ' + particletype)
-    result.append(detector_cell_string)
-    # if particletype == 'p' :
-    #    result.append('\tdr '+mtnumber+'  void')
-    # else :
-    result.append('\tdr ' + mtnumber + '  ' + material_description)
-
-    result.append('')
-    return result
-
-def return_serpent_file_material_cards(parts,material_dictionary):
+def return_serpent_file_material_cards(components,material_dictionary):
 
     #relative_dir = os.path.basename(settings.output_folder_stl)
 
     lines_for_file = []
     materials_already_added=[]
-    for component in parts:
+    for component in components:
         print(component)
         if material_dictionary[component].material_card_name not in materials_already_added:
             lines_for_file.append('\n\n')
@@ -244,48 +204,67 @@ def return_plasma_source(plasma_source_name='EU_baseline_2015') :
 
         return lines_for_file
 
+
+def find_components(list_of_detailed_modules_components):
+
+    dictionary_of_components=collections.defaultdict(list)
+    for item in list_of_detailed_modules_components:
+        #print(item)
+        for key,value in item.iteritems():
+            dictionary_of_components[key].append(value)
+
+    return dictionary_of_components
+
+
 def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
 
     output_folder=neutronics_parameters_dictionary['output_folder']
-    parts=neutronics_parameters_dictionary['parts']
+    components=find_components(neutronics_parameters_dictionary['parts'])
     include_um_mesh=neutronics_parameters_dictionary['include_um_mesh']
     output_folder_stl=neutronics_parameters_dictionary['output_folder_stl']
     material_dictionary=neutronics_parameters_dictionary['material_dictionary']
-    material_description_for_tbr_tally=neutronics_parameters_dictionary['material_description_for_tbr_tally']
-    list_of_cells_to_tbr_tally=neutronics_parameters_dictionary['list_of_cells_to_tbr_tally']
+    #material_description_for_tbr_tally=neutronics_parameters_dictionary['material_description_for_tbr_tally']
     plot_serpent_geometry=neutronics_parameters_dictionary['plot_serpent_geometry']
-    include_photons=neutronics_parameters_dictionary['include_photons']
+    tallies=neutronics_parameters_dictionary['tallies']
     nps=neutronics_parameters_dictionary['nps']
+    particle_type=neutronics_parameters_dictionary['particle_type']
+        
 
-    serpent_input_filename = 'serpent_input_file.serp'
 
-
-    directory_path_to_serpent_output = os.path.join(output_folder, serpent_input_filename)
 
     serpent_file = []
-
-    if not parts:
-        parts = return_parts_from_directory(output_folder_stl,material_dictionary)
-
     serpent_file += return_serpent_file_head(include_um_mesh)
-    serpent_file += return_serpent_file_stl_parts(parts,material_dictionary,output_folder_stl,output_folder)
+    serpent_file += return_serpent_file_stl_parts(components,material_dictionary,output_folder_stl,output_folder)
+
     number_of_stl_parts=0
     for line in serpent_file:
         number_of_stl_parts=number_of_stl_parts+line.count('.stl')
-    serpent_file += return_serpent_file_run_params(plot_serpent_geometry,include_photons,nps)
-    serpent_file += return_serpent_file_material_cards(parts, material_dictionary)
-    #
+
+    serpent_file += return_serpent_file_run_params(plot_serpent_geometry,particle_type,nps)
+
+    serpent_file += return_serpent_file_material_cards(components, material_dictionary)
+    
     serpent_file += return_plasma_source()
 
-   #
-    serpent_file += return_serpent_macroscopic_tbr_detectors(material_description_for_tbr_tally,list_of_cells_to_tbr_tally)
+    for tally in tallies:
+        # materials=[]
+        # for body in tally['bodies']:
+        #     materials.append(material_dictionary[body].material_card_name)
+        # if materials[1:] == materials[:-1]:
+        print(tally)
+        serpent_file += return_serpent_macroscopic_detectors(list_of_bodies_to_tally=tally['bodies'],
+                                                             mt_number=tally['mt_number'],
+                                                             detector_name=tally['name'],
+                                                             particle_type=tally['particle_type'],
+                                                             #material_description=materials[0],
+                                                             )
 
+  
     # # include_photons=True
     # if settings.include_photons == 'yes':
     #     serpent_file += ["set ngamma 2 %analog gamma"]
     #     serpent_file += ['set pdatadir "/opt/serpent2/photon_data/"']
-    #     serpent_file += [
-    #         'set ekn']  # makes upper and lower energy limits for photons to stop infinite loops in transport
+    #     serpent_file += ['set ekn']  # makes upper and lower energy limits for photons to stop infinite loops in transport
     #
     #     serpent_file += return_serpent_macroscopic_detectors('neutron_heating', '-4', 'n',
     #                                                          auto_make_model_description_shu.neutron_heat_tally_list,
@@ -304,11 +283,11 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
     #     serpent_file += return_serpent_file_mesh('li6_mt205')
     #     serpent_file += return_serpent_file_mesh('li7_mt205')
     #     serpent_file += return_serpent_file_mesh('neutron_multiplication')
-    print(serpent_file)
-    with open(directory_path_to_serpent_output, 'w') as s_i:
-        for x in serpent_file:
-            print(x)
-            s_i.write(x + '\n')
+    directory_path_to_serpent_output = os.path.join(output_folder, 'serpent_input_file.serp')
+
+    with open(directory_path_to_serpent_output, 'w') as serpent_input_file:
+        for line in serpent_file:
+            serpent_input_file.write(line + '\n')
     print('file written to ',directory_path_to_serpent_output)
 
     return directory_path_to_serpent_output,number_of_stl_parts

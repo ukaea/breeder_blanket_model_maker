@@ -11,6 +11,10 @@ from breeder_blanket_model_maker.make_serpent_input_file import *
 from neutronics_material_maker.nmm import *
 from neutronics_material_maker.examples import *
 
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
 
 def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory):
 
@@ -38,6 +42,7 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory)
         blanket_geometry_parameters =  {
 
             'blanket_type' : blanket_type,
+            'plasma_filename' :'/home/jshim/Eurofusion_baseline_2016/envelopes/plasma.step',            
             'envelope_filename' : module,
             'output_folder' : output_directory,
             'output_files':['step','stl'],            
@@ -50,6 +55,10 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory)
             'radial_segmentations':[250, 15],
             'poloidal_upper_offset_for_breeder_channel':150,
             'poloidal_lower_offset_for_breeder_channel':150,
+
+            # 'cooling_channel_offset_from_first_wall': 3,
+            # 'first_wall_channel_radial_mm': 13.5,
+            # 'first_wall_channel_toroidal_segmentations': first_wall_channel_toroidal_segmentations_dict,  # 13.5,4.5
 
         }
 
@@ -75,9 +84,42 @@ def define_neutronics_materials(enrichment_fraction):
                              'back_lithium_lead': mat_lithium_lead,
                              'back_helium_1': mat_He_coolant_back_plate,
                              'back_helium_2': mat_He_coolant_back_plate,
-                             'structural_plate': mat_cooling_plates_homogenised, 
+                             'structural_plate': mat_cooling_plates_homogenised, #
                              'end_caps_homogenised': mat_end_caps_homogenised,
                              'first_wall_homogenised': mat_first_wall_homogenised,
+                             'plasma': mat_DT_plasma,
+                             'central_solenoid': mat_central_solenoid_m25,
+                             'divertor_1st_layer': mat_divertor_layer_1_m15, 
+                             'divertor_2nd_layer': mat_divertor_layer_2_m74, 
+                             'divertor_3rd_layer': mat_divertor_layer_3_m15,
+                             'divertor_4th_layer': mat_divertor_layer_4_m75,
+                             'manifolder': mat_VV_Body_m60 ,
+                             'ports': mat_TF_Casing_m50,
+                             #'shell': , # outer shell ignored
+                             'shield': mat_TF_Casing_m50,
+                             'tf_case': mat_TF_Casing_m50,
+                             'tf_coils': mat_TF_Magnet_m25,
+                             'vacuum_1st_layer': mat_VV_Shell_m50,
+                             'vacuum_2nd_layer': mat_VV_Body_m60,
+                             'vacuum_3rd_layer': mat_VV_Shell_m50,
+                             'vaccum_vessel_shield': mat_ShieldPort_m60,
+                             'blanket_support':mat_Eurofer,
+
+                             'first_wall_coolant':mat_He_in_first_walls,
+                             'first_wall_material':mat_He_in_first_walls,
+
+                             'slice_lithium_lead':mat_lithium_lead,
+                             'slice_armour':mat_Tungsten,
+                             'slice_first_wall_material':mat_Eurofer,
+                             'slice_first_wall_homogenised':mat_first_wall_homogenised, #ignore
+                             'slice_first_wall_coolant':mat_He_in_first_walls,
+                             'slice_cooling_plate_material':mat_cooling_plates_homogenised,
+                             'slice_cooling_plate_coolant':mat_He_in_coolant_plates,
+                             'slice_back_plate_1':mat_Eurofer,
+                             'slice_back_helium':mat_He_coolant_back_plate,
+                             'slice_back_plate_2':mat_Eurofer,
+                             'slice_back_lithium_lead':mat_lithium_lead,
+                             'slice_back_plate_3':mat_Eurofer,
                           }
     return material_dictionary
 
@@ -103,16 +145,24 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
                                        ]
                              }
 
+
+
     return neutronics_parameters
 
 
 output_directory='/home/jshim/detailed_DCLL'
 list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type = 'DCLL',
-                                                                input_files= ['sample_envelope_1.step','sample_envelope_2.step'],
+                                                                input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1, 27)],#27,['sample_envelope_1.step','sample_envelope_2.step'],
                                                                 output_directory=output_directory)
 
 
 list_of_detailed_modules_parts = detailed_module(list_of_geometry_parameters)
+
+extra_parts = read_in_step_files_and_save_as_seperate_stl_files(read_folder='/home/jshim/Eurofusion_baseline_2016/reactor_step_files',
+                                                                write_folder=os.path.join(output_directory,'stl'),
+                                                                ignore_files=['shell.stp'])
+
+list_of_detailed_modules_parts.append(extra_parts)
 
 material_dictionary=define_neutronics_materials(enrichment_fraction=0.9)
 

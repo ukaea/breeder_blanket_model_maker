@@ -50,6 +50,11 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory)
             'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
             'toroidal_segmentations' : toroidal_segmentations_ordered_dict,
             'radial_segmentations' : [150],
+
+            # 'cooling_channel_offset_from_first_wall': 3,
+            # 'first_wall_channel_radial_mm': 13.5,
+            # 'first_wall_channel_poloidal_segmentations': first_wall_channel_poloidal_segmentations_dict,  # 13.5,4.5
+
         }
 
 
@@ -79,6 +84,39 @@ def define_neutronics_materials(enrichment_fraction):
                              'end_caps_homogenised': mat_end_caps_homogenised,
                              'first_wall_homogenised': mat_first_wall_homogenised,
 
+                             'plasma': mat_DT_plasma,
+                             'central_solenoid': mat_central_solenoid_m25,
+                             'divertor_1st_layer': mat_divertor_layer_1_m15, 
+                             'divertor_2nd_layer': mat_divertor_layer_2_m74, 
+                             'divertor_3rd_layer': mat_divertor_layer_3_m15,
+                             'divertor_4th_layer': mat_divertor_layer_4_m75,
+                             'manifolder': mat_VV_Body_m60 ,
+                             'ports': mat_TF_Casing_m50,
+                             #'shell': , # outer shell ignored
+                             'shield': mat_TF_Casing_m50,
+                             'tf_case': mat_TF_Casing_m50,
+                             'tf_coils': mat_TF_Magnet_m25,
+                             'vacuum_1st_layer': mat_VV_Shell_m50,
+                             'vacuum_2nd_layer': mat_VV_Body_m60,
+                             'vacuum_3rd_layer': mat_VV_Shell_m50,
+                             'vaccum_vessel_shield': mat_ShieldPort_m60,
+                             'blanket_support':mat_Eurofer,
+
+                             'first_wall_coolant':mat_He_in_first_walls,
+                             'first_wall_material':mat_He_in_first_walls,
+
+                             'slice_lithium_lead':mat_lithium_lead,
+                             'slice_armour':mat_Tungsten,
+                             'slice_first_wall_material':mat_Eurofer,
+                             'slice_first_wall_homogenised':mat_first_wall_homogenised, #ignore
+                             'slice_first_wall_coolant':mat_He_in_first_walls,
+                             'slice_cooling_plate_material':mat_cooling_plates_homogenised,
+                             'slice_cooling_plate_coolant':mat_He_in_coolant_plates,
+                             'slice_back_plate_1':mat_Eurofer,
+                             'slice_back_helium':mat_He_coolant_back_plate,
+                             'slice_back_plate_2':mat_Eurofer,
+                             'slice_back_lithium_lead':mat_lithium_lead,
+                             'slice_back_plate_3':mat_Eurofer,
                           }
     return material_dictionary
 
@@ -110,10 +148,18 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
 
 output_directory='/home/jshim/detailed_WCLL'
 list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type ='WCLL',
-                                                                input_files= ['sample_envelope_1.step','sample_envelope_2.step'],
+                                                                input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1, 27)],#27,
                                                                 output_directory = output_directory)
 
 list_of_detailed_modules_parts = detailed_module(list_of_geometry_parameters)
+
+
+
+extra_parts = read_in_step_files_and_save_as_seperate_stl_files(read_folder='/home/jshim/Eurofusion_baseline_2016/reactor_step_files',
+                                                                write_folder=os.path.join(output_directory,'stl'),
+                                                                ignore_files=['shell.stp'])
+
+list_of_detailed_modules_parts.append(extra_parts)
 
 material_dictionary=define_neutronics_materials(enrichment_fraction=0.8)
 
