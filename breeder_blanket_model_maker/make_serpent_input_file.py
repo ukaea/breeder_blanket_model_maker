@@ -84,7 +84,7 @@ def return_serpent_file_stl_parts(components,material_dictionary,output_folder_s
 
     return lines_for_file#,number_of_stl_parts
 
-def return_serpent_file_run_params(plot_serpent_geometry,particle_type,nps):
+def return_serpent_file_run_params(plot_serpent_geometry,tallies,nps):
 
 
     lines_for_file=[]
@@ -103,11 +103,14 @@ def return_serpent_file_run_params(plot_serpent_geometry,particle_type,nps):
     lines_for_file.append("set lost 100")  # allows for 100 lost particles
     lines_for_file.append("set usym sector 3 2 0.0 0.0 0 10") #a 10 degree slice with boundary conditions
 
-
-    if 'p' in particle_type:
-         lines_for_file += ["set ngamma 2 %analog gamma"]
-         lines_for_file += ['set pdatadir "/opt/serpent2/photon_data/"']
-         lines_for_file += ['set ekn']
+    for tally in tallies:
+        particle_type= tally['particle_type']
+        if particle_type =='p':
+            print('Tally with photons found, including photons in the simulation')
+            lines_for_file += ["set ngamma 2 %analog gamma"]
+            lines_for_file += ['set pdatadir "/opt/serpent2/photon_data/"']
+            lines_for_file += ['set ekn']
+            break
 
     
     batch_size = min(0.5 * nps, 5000)
@@ -227,7 +230,7 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
     plot_serpent_geometry=neutronics_parameters_dictionary['plot_serpent_geometry']
     tallies=neutronics_parameters_dictionary['tallies']
     nps=neutronics_parameters_dictionary['nps']
-    particle_type=neutronics_parameters_dictionary['particle_type']
+    #particle_type=neutronics_parameters_dictionary['particle_type']
         
 
 
@@ -240,41 +243,23 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
     for line in serpent_file:
         number_of_stl_parts=number_of_stl_parts+line.count('.stl')
 
-    serpent_file += return_serpent_file_run_params(plot_serpent_geometry,particle_type,nps)
+    serpent_file += return_serpent_file_run_params(plot_serpent_geometry,tallies,nps)
 
     serpent_file += return_serpent_file_material_cards(components, material_dictionary)
     
     serpent_file += return_plasma_source()
 
     for tally in tallies:
-        # materials=[]
-        # for body in tally['bodies']:
-        #     materials.append(material_dictionary[body].material_card_name)
-        # if materials[1:] == materials[:-1]:
         print(tally)
         serpent_file += return_serpent_macroscopic_detectors(list_of_bodies_to_tally=tally['bodies'],
                                                              mt_number=tally['mt_number'],
                                                              detector_name=tally['name'],
                                                              particle_type=tally['particle_type'],
-                                                             #material_description=materials[0],
+                                                             #material_description=materials[0], void is used 
                                                              )
 
   
-    # # include_photons=True
-    # if settings.include_photons == 'yes':
-    #     serpent_file += ["set ngamma 2 %analog gamma"]
-    #     serpent_file += ['set pdatadir "/opt/serpent2/photon_data/"']
-    #     serpent_file += ['set ekn']  # makes upper and lower energy limits for photons to stop infinite loops in transport
-    #
-    #     serpent_file += return_serpent_macroscopic_detectors('neutron_heating', '-4', 'n',
-    #                                                          auto_make_model_description_shu.neutron_heat_tally_list,
-    #                                                          'void')
-    #     serpent_file += return_serpent_macroscopic_detectors('photon_heating', '-26', 'p',
-    #                                                          auto_make_model_description_shu.photon_heat_tally_list,
-    #                                                          'void')
-    #
-    #     # serpent_file += return_serpent_macroscopic_detectors('photon_heating','-12','p',auto_make_model_description.photon_heat_tally_list)
-    #
+
     # if settings.include_um_mesh == 'yes':
     #     serpent_file += 'include "detector"'
     #

@@ -112,12 +112,11 @@ def define_neutronics_materials(enrichment_fraction):
                           }
     return material_dictionary
 
-def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1000,**kwargs):
+def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1e7,**kwargs):
 
     neutronics_parameters= { 'output_folder':output_directory,
                              'parts':list_detailed_modules_parts,
                              'include_um_mesh':False,
-                             'particle_type':['n'],
                              'output_folder_stl':os.path.join(output_directory,'stl'),
                              'material_dictionary':material_dictionary,
                              'plot_serpent_geometry':False,
@@ -126,10 +125,16 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
                                             'bodies':['breeder_material','neutron_multiplier'],
                                             'mt_number':-55,
                                             'particle_type':'n'},
+                                        {'name':'neutron_heating',
+                                            'bodies':['armour','breeder_material','neutron_multiplier','back_plate_1','back_plate_2','back_plate_3','back_helium_1','back_helium_2','cooling_plate_1','cooling_plate_2','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-4,
+                                            'particle_type':'n'},
+                                        {'name':'photon_heating',
+                                            'bodies':['armour','breeder_material','neutron_multiplier','back_plate_1','back_plate_2','back_plate_3','back_helium_1','back_helium_2','cooling_plate_1','cooling_plate_2','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-26,
+                                            'particle_type':'p'},                                            
                                        ]
                              }
-
-
 
     return neutronics_parameters
 

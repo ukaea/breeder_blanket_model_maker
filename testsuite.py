@@ -15,10 +15,10 @@
 
 import unittest
 
-from module_tests import HCLL_tests
-from module_tests import DCLL_tests
-from module_tests import HCPB_tests
-from module_tests import WCLL_tests
+# from module_tests import HCLL_tests
+# from module_tests import DCLL_tests
+from module_tests import *
+# from module_tests import WCLL_tests
 
 def main():
     unittest.TextTestRunner(verbosity=3).run(unittest.TestSuite())

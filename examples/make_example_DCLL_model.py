@@ -72,7 +72,6 @@ def define_neutronics_materials(enrichment_fraction):
                              'back_plate_3': mat_Eurofer,
                              'back_plate_4': mat_Eurofer,
                              'back_plate_5': mat_Eurofer,
-                             'back_lithium_lead': mat_lithium_lead,
                              'back_helium_1': mat_He_coolant_back_plate,
                              'back_helium_2': mat_He_coolant_back_plate,
                              'structural_plate': mat_cooling_plates_homogenised, 
@@ -82,24 +81,27 @@ def define_neutronics_materials(enrichment_fraction):
     return material_dictionary
 
 
-
-def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1000,**kwargs):
-
-
+def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1e7,**kwargs):
 
     neutronics_parameters= { 'output_folder':output_directory,
                              'parts':list_detailed_modules_parts,
                              'include_um_mesh':False,
-                             'particle_type':['n'],
                              'output_folder_stl':os.path.join(output_directory,'stl'),
                              'material_dictionary':material_dictionary,
-                             'material_description_for_tbr_tally':material_dictionary['lithium_lead'].material_card_name,
                              'plot_serpent_geometry':False,
                              'nps':nps,
                              'tallies':[{'name':'tbr',
                                             'bodies':['lithium_lead'],
                                             'mt_number':-55,
                                             'particle_type':'n'},
+                                        {'name':'neutron_heating',
+                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_plate_4','back_plate_5','back_helium_1','back_helium_2','structural_plate','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-4,
+                                            'particle_type':'n'},
+                                        {'name':'photon_heating',
+                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_plate_4','back_plate_5','back_helium_1','back_helium_2','structural_plate','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-26,
+                                            'particle_type':'p'},                                            
                                        ]
                              }
 

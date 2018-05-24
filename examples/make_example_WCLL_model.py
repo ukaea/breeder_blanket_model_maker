@@ -40,8 +40,7 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory)
             'blanket_type' : blanket_type,
             'envelope_filename' : module,
             'output_folder' : output_directory,
-            'output_files':['step','stl'],
-            'plasma_filename' :'/home/jshim/Eurofusion_baseline_2016/envelopes/plasma.step',            
+            'output_files':['step','stl'],            
             'first_wall_poloidal_fillet_radius' : 50,
             'armour_thickness' : 2,
             'first_wall_thickness' : 25,
@@ -84,13 +83,11 @@ def define_neutronics_materials(enrichment_fraction):
 
 
 
-def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1000,**kwargs):
-
+def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dictionary,output_directory,nps=1e7,**kwargs):
 
     neutronics_parameters= { 'output_folder':output_directory,
                              'parts':list_detailed_modules_parts,
                              'include_um_mesh':False,
-                             'particle_type':['n'],
                              'output_folder_stl':os.path.join(output_directory,'stl'),
                              'material_dictionary':material_dictionary,
                              'plot_serpent_geometry':False,
@@ -99,10 +96,16 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
                                             'bodies':['lithium_lead'],
                                             'mt_number':-55,
                                             'particle_type':'n'},
+                                        {'name':'neutron_heating',
+                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_plate_4','back_plate_5','structural_plate','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-4,
+                                            'particle_type':'n'},
+                                        {'name':'photon_heating',
+                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_plate_4','back_plate_5','structural_plate','end_caps_homogenised','first_wall_homogenised'],
+                                            'mt_number':-26,
+                                            'particle_type':'p'},                                            
                                        ]
                              }
-
-
 
     return neutronics_parameters
 
