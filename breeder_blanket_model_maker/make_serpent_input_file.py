@@ -64,23 +64,24 @@ def return_serpent_file_stl_parts(components,material_dictionary,output_folder_s
     for component in components:
         # print(component)
         # if component['stl']==True:
-        print('body ' + component + '-b ' + component + '-c ')
-        lines_for_file.append('body ' + component + '-b ' + component + '-c ' + material_dictionary[component].material_card_name)
-        for part in components[component]:
-            stl_filepaths = part['stl_filename']
-            for stl_filepath in stl_filepaths:
-                stl_filename = os.path.split(stl_filepath)[-1]
-                stl_filename_base = os.path.splitext(stl_filename)[0]
-                # print('stl_filepath',stl_filepath)
-                # print('stl_filename',stl_filename)
-                # print('stl_filename_base',stl_filename_base)
+        if component != 'slice_envelope':
+            print('body ' + component + '-b ' + component + '-c ')
+            lines_for_file.append('body ' + component + '-b ' + component + '-c ' + material_dictionary[component].material_card_name)
+            for part in components[component]:
+                stl_filepaths = part['stl_filename']
+                for stl_filepath in stl_filepaths:
+                    stl_filename = os.path.split(stl_filepath)[-1]
+                    stl_filename_base = os.path.splitext(stl_filename)[0]
+                    # print('stl_filepath',stl_filepath)
+                    # print('stl_filename',stl_filename)
+                    # print('stl_filename_base',stl_filename_base)
 
 
-                relative_filepath = os.path.join(relative_dir, stl_filename)
-                lines_for_file.append('    file ' + component + '-b "' + relative_filepath + '" 0.1 0 0 0  ')
+                    relative_filepath = os.path.join(relative_dir, stl_filename)
+                    lines_for_file.append('    file ' + component + '-b "' + relative_filepath + '" 0.1 0 0 0  ')
 
-            #number_of_stl_parts=number_of_stl_parts+1
-        lines_for_file.append('\n\n')
+                #number_of_stl_parts=number_of_stl_parts+1
+            lines_for_file.append('\n\n')
 
     return lines_for_file#,number_of_stl_parts
 
@@ -153,14 +154,15 @@ def return_serpent_file_material_cards(components,material_dictionary):
     lines_for_file = []
     materials_already_added=[]
     for component in components:
-        print(component)
-        if material_dictionary[component].material_card_name not in materials_already_added:
-            lines_for_file.append('\n\n')
+        if component != 'slice_envelope':  
+            print(component)
+            if material_dictionary[component].material_card_name not in materials_already_added:
+                lines_for_file.append('\n\n')
 
-            lines_for_file.append(material_dictionary[component].serpent_material_card())
-            materials_already_added.append(material_dictionary[component].material_card_name)
-        else:
-            print('material previous added')
+                lines_for_file.append(material_dictionary[component].serpent_material_card())
+                materials_already_added.append(material_dictionary[component].material_card_name)
+            else:
+                print('material previous added')
     return lines_for_file
 
 def return_plasma_source(plasma_source_name='EU_baseline_2015') :
@@ -209,41 +211,45 @@ def return_plasma_source(plasma_source_name='EU_baseline_2015') :
 
 
 def find_components(list_of_detailed_modules_components):
-
+    #print('parts = ',list_of_detailed_modules_components)
     dictionary_of_components=collections.defaultdict(list)
+    if type(list_of_detailed_modules_components) !='list':
+        list_of_detailed_modules_components=[list_of_detailed_modules_components]
     for item in list_of_detailed_modules_components:
-        #print(item)
         for key,value in item.iteritems():
             dictionary_of_components[key].append(value)
-
     return dictionary_of_components
 
 
 def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
 
-    output_folder=neutronics_parameters_dictionary['output_folder']
     components=find_components(neutronics_parameters_dictionary['parts'])
-    include_um_mesh=neutronics_parameters_dictionary['include_um_mesh']
-    output_folder_stl=neutronics_parameters_dictionary['output_folder_stl']
+    
+    if 'include_umesh' in neutronics_parameters_dictionary.keys():
+        pass
+    else:
+        neutronics_parameters_dictionary['include_umesh']=False
+
+
     material_dictionary=neutronics_parameters_dictionary['material_dictionary']
     #material_description_for_tbr_tally=neutronics_parameters_dictionary['material_description_for_tbr_tally']
-    plot_serpent_geometry=neutronics_parameters_dictionary['plot_serpent_geometry']
-    tallies=neutronics_parameters_dictionary['tallies']
-    nps=neutronics_parameters_dictionary['nps']
+
     #particle_type=neutronics_parameters_dictionary['particle_type']
         
-
-
-
     serpent_file = []
-    serpent_file += return_serpent_file_head(include_um_mesh)
-    serpent_file += return_serpent_file_stl_parts(components,material_dictionary,output_folder_stl,output_folder)
+
+    serpent_file += return_serpent_file_head(neutronics_parameters_dictionary['include_umesh'])
+    serpent_file += return_serpent_file_stl_parts(components,
+                                                  material_dictionary,neutronics_parameters_dictionary['output_folder_stl'],
+                                                  neutronics_parameters_dictionary['output_folder'])
 
     number_of_stl_parts=0
     for line in serpent_file:
         number_of_stl_parts=number_of_stl_parts+line.count('.stl')
 
-    serpent_file += return_serpent_file_run_params(plot_serpent_geometry,tallies,nps)
+    serpent_file += return_serpent_file_run_params(neutronics_parameters_dictionary['plot_serpent_geometry'],
+                                                   neutronics_parameters_dictionary['tallies'],
+                                                   neutronics_parameters_dictionary['nps'])
 
     serpent_file += return_serpent_file_material_cards(components, material_dictionary)
     
@@ -268,7 +274,7 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
     #     serpent_file += return_serpent_file_mesh('li6_mt205')
     #     serpent_file += return_serpent_file_mesh('li7_mt205')
     #     serpent_file += return_serpent_file_mesh('neutron_multiplication')
-    directory_path_to_serpent_output = os.path.join(output_folder, 'serpent_input_file.serp')
+    directory_path_to_serpent_output = os.path.join(neutronics_parameters_dictionary['output_folder'], 'serpent_input_file.serp')
 
     with open(directory_path_to_serpent_output, 'w') as serpent_input_file:
         for line in serpent_file:

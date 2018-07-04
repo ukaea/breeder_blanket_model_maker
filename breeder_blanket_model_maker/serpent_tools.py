@@ -89,7 +89,11 @@ def run_serpent_locally(path_and_file):
     return tally_dict
 
 # tally_dict = find_tally_and_error('/home/jshim/detailed_HCPB/serpent_input_file.serp_det0.m')
+# print(tally_dict['tbr'])
 # tally_dict = find_tally_and_error('/home/jshim/detailed_HCLL/serpent_input_file.serp_det0.m')
+# print(tally_dict['tbr'])
 # tally_dict = find_tally_and_error('/home/jshim/detailed_DCLL/serpent_input_file.serp_det0.m')
+# print(tally_dict['tbr'])
 # tally_dict = find_tally_and_error('/home/jshim/detailed_WCLL/serpent_input_file.serp_det0.m')
+# print(tally_dict['tbr'])
 

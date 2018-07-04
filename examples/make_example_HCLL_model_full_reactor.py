@@ -170,7 +170,7 @@ output_directory='/home/jshim/detailed_HCLL'
 list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type ='HCLL',
                                                                 input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1, 27)],#27,
                                                                 output_directory = output_directory,
-                                                                poloidal_lithium_lead_in_mm =34.5)
+                                                                poloidal_lithium_lead_in_mm =80)
 
 list_of_detailed_modules_parts = detailed_module(list_of_geometry_parameters)
 
@@ -187,7 +187,7 @@ material_dictionary=define_neutronics_materials(enrichment_fraction=0.8)
 neutronics_parameters = define_neutronics_model_parmeters(list_detailed_modules_parts=list_of_detailed_modules_parts,
                                                           material_dictionary=material_dictionary,
                                                           output_directory=output_directory,
-                                                          nps=1000)
+                                                          nps=10000)
 
 directory_path_to_serpent_output,number_of_stl_parts= make_serpent_stl_based_input_file(neutronics_parameters)
 

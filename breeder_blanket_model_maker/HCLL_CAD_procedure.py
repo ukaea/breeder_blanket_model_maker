@@ -188,6 +188,8 @@ def HCLL_detailed_module(blanket_parameters_dict):
                                    top_bottom_edges=front_face_torodial_edges_to_fillet,
                                    front_face=envelope_front_face)
 
+        dictionary_of_parts['slice_envelope']['part'] = slice
+
         dictionary_of_parts['slice_lithium_lead']['part'], dictionary_of_parts['lithium_lead']['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts['lithium_lead']['part'], slice)
 
 
@@ -204,11 +206,11 @@ def HCLL_detailed_module(blanket_parameters_dict):
         #for i, key in enumerate(blanket_parameters_dict['poloidal_segmentations']):
         #  dictionary_of_parts['slice_'+key]['part'],dictionary_of_parts[key]['part'] = common_and_uncommon_solids_with_envelope(dictionary_of_parts[key]['part'],slice)
 
-        dictionary_of_parts['slice_cooling_plate_homogenised']['part'], dictionary_of_parts['cooling_plate_homogenised']['part'] = common_and_uncommon_solids_with_envelope(cooling_plate, slice)
+        slice_cooling_plate_homogenised, dictionary_of_parts['cooling_plate_homogenised']['part'] = common_and_uncommon_solids_with_envelope(cooling_plate, slice)
 
         #Part.makeCompound(cooling_plate_in_slice).exportStep('cooling_plate_in_slice.step')
 
-        list_of_cooling_pipes, list_of_structure = add_cooling_pipes_to_div(div_to_cool=dictionary_of_parts['slice_cooling_plate_homogenised']['part'][0],
+        list_of_cooling_pipes, list_of_structure = add_cooling_pipes_to_div(div_to_cool=slice_cooling_plate_homogenised[0],
                                                                             channel_poloidal_height = blanket_parameters_dict['cooling_plates_channel_poloidal_mm'],
                                                                             channel_radial_height = blanket_parameters_dict['cooling_plates_channel_radial_mm'],
                                                                             plate_poloidal_height = blanket_parameters_dict['poloidal_segmentations']['cooling_plate_homogenised'],
@@ -244,5 +246,10 @@ def HCLL_detailed_module(blanket_parameters_dict):
                                                           blanket_type=blanket_parameters_dict['blanket_type'])
 
 
+      if 'umesh' in output_files:
+          dictionary_of_parts=save_components_as_umesh(dictionary_of_parts = dictionary_of_parts, 
+                                                       output_folder = output_folder_step,
+                                                       mesh_component_prefix='slice_',
+                                                       csg_envelope='slice_envelope.step')
 
       return dictionary_of_parts #.update({'logtime_data':logtime_data})
