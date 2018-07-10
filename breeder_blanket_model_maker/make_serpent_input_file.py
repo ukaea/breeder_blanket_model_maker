@@ -4,42 +4,94 @@ from collections import Counter
 import collections
 from collections import OrderedDict
 
+def read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts):
+    
+    print(list_of_detailed_modules_parts)
+    for entry in list_of_detailed_modules_parts:
+        if 'slice_envelope' in entry.keys():
+            step_filename = entry['slice_envelope']['step_filename']
+    
+    print('step_filename',step_filename)
+    #print(list_of_detailed_modules_parts['slice_envelope']['step_filename'])
 
-def return_serpent_file_head(include_um_mesh):
+
+    input_filename='D_'+os.path.basename(step_filename.split('.')[0]+'_MCNP.txt')
+    input_dirname =os.path.dirname(step_filename)
+
+    input_filename_and_path = os.path.join(input_dirname,input_filename)
+    
+    print('input_filename_and_path',input_filename_and_path)
+
+    with open(input_filename_and_path) as f:
+        contents = f.readlines()
+    #print(contents)
+
+        
+    for i, line in enumerate(contents):
+        if line.strip() == '':
+            break
+        if len(line)>0:
+            if line[0].isdigit():
+                #print('cell found')
+                #print(line)
+                cell_line = 'cell 10    0   fill all_um_geometry ' +' '.join(line.split()[2:])
+    print('new cell_line',cell_line)
+    
+    
+    surface_translate_dict= {'P':'plane','PY':'py','PZ':'pz','PX':'px'}
+    
+    new_surfaces =[]
+    for line in contents[i+1:]:
+        if line.strip() == '':
+            break
+        if len(line)>0:
+            if line[0].isdigit():
+                #print('surface found')
+                #print(line)
+                chop_up = line.split()
+                new_surfaces.append('surf '+ ' '.join([chop_up[0],surface_translate_dict[chop_up[1]],' '.join(chop_up[2:]) ])+' % edge surface for blanket slice')
+                
+    return cell_line, new_surfaces
+
+def return_serpent_file_head(include_um_mesh,list_of_detailed_modules_parts):
     lines_for_file=[]
     lines_for_file.append('% run this file using one of the following three commands')
     lines_for_file.append('%     sss2 filename -tracks 100 ')
     lines_for_file.append('%     sss2 filename -omp 2 ')
     lines_for_file.append('%     sss2 filename')
-    lines_for_file.append(' ')
-    lines_for_file.append(' ')
-    lines_for_file.append('% model stl files')
-    lines_for_file.append('surf 999  sph 0 0 0 4000 %base units are cm')
-    lines_for_file.append('surf 998  sph 0 0 0 4001')
-    lines_for_file.append('\n\n% CSG cells')
-    lines_for_file.append('cell 1000  0 fill sector -999 %sphere fill with universe sector')
-    #lines_for_file.append('cell 1999  0 outside 999')
-    lines_for_file.append('cell 1999  0 outside 999 ')# -998')
+    lines_for_file.append('\n\n')
+
+    lines_for_file.append('surf 20  sph 0 0 0 1000 % edge surface for the model \n\n')
+    
 
     if include_um_mesh==True:
-        lines_for_file.append('cell 10    0 fill=all_um_geometry   -999 ')
+        cell_line, new_surfaces = read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts)
+        lines_for_file = lines_for_file + new_surfaces
+        
+        lines_for_file.append(cell_line)
+        
+        lines_for_file.append('cell 1000  0 fill sector -20  #10 % filled with solid 1 sector')
 
-    lines_for_file.append('\n\n%background universe cell = void')
-    lines_for_file.append('cell 2000  bg_for_stl void -998 % background universe number 2')
+    else:
+        lines_for_file.append('cell 1000  0 fill sector -20  % filled with solid 1 sector')
+    #lines_for_file.append('cell 1999  0 outside 999')
+    lines_for_file.append('cell 200  bg_for_um_and_stl void -20 % background cell for all universes')
+    lines_for_file.append('cell 50  0 outside 20 % graveyard')# -998')  
     lines_for_file.append('\n\n')
 
     if include_um_mesh==True:
 
-        lines_for_file.append('solid 1 all_um_geometry bg_for_stl')
+        lines_for_file.append('solid 1 all_um_geometry bg_for_um_and_stl')
         lines_for_file.append('1000 2 10 5   % search mesh parameters for octree')
-        lines_for_file.append('points')
+        lines_for_file.append('scaled_points')
         lines_for_file.append('faces')
         lines_for_file.append('owner')
         lines_for_file.append('neighbour')
-        lines_for_file.append('matfile')
+        lines_for_file.append('matfile_renamed')
+        lines_for_file.append('\n\n')
 
     lines_for_file.append('\n\n% ------  stl cells in universe 1 ------\n% background is universe 2 which is just void')
-    lines_for_file.append('solid 2  sector bg_for_stl   %solid 2 is stl.  <uni> <bg uni>')
+    lines_for_file.append('solid 2  sector bg_for_um_and_stl   %solid 2 is stl.  <uni> <bg uni>')
     lines_for_file.append('100 3 10 5 5     %adaptive search mesh parameters')
     lines_for_file.append('%<max cells under mesh before split> <n levels> <size 1> < size 2> < size n>')
     lines_for_file.append('% here initial search mesh is 10x10x10, any mesh with > 5 cells under it is split into a 5x5x5 mesh.')
@@ -59,12 +111,14 @@ def return_serpent_file_stl_parts(components,material_dictionary,output_folder_s
 
     print('relative director for stl files ' ,relative_dir)
 
+    print('material_dictionary',material_dictionary)
+
     lines_for_file = []
     #number_of_stl_parts=0
     for component in components:
         # print(component)
         # if component['stl']==True:
-        if component != 'slice_envelope':
+        if component != 'slice_envelope' and component != 'slice_first_wall_homogenised':
             print('body ' + component + '-b ' + component + '-c ')
             lines_for_file.append('body ' + component + '-b ' + component + '-c ' + material_dictionary[component].material_card_name)
             for part in components[component]:
@@ -128,6 +182,10 @@ def return_serpent_file_run_params(plot_serpent_geometry,tallies,nps):
 
     if plot_serpent_geometry == True:
 
+        lines_for_file.append('plot 1 10000 10000 0.2  -2100 2100 -2100 2100')
+        lines_for_file.append('plot 2 10000 10000 0.2  -2100 2100 -2100 2100 %plot py pixels pixels origin')
+        lines_for_file.append('plot 3 10000 10000 0.2  -2100 2100 -2100 2100')
+        
         lines_for_file.append('plot 1 16800 16800 -2  -2100 2100 -2100 2100')
         lines_for_file.append('plot 2 16800 16800 -2  -2100 2100 -2100 2100 %plot py pixels pixels origin')
         lines_for_file.append('plot 3 16800 16800 -2  -2100 2100 -2100 2100')
@@ -144,10 +202,16 @@ def return_serpent_macroscopic_detectors(list_of_bodies_to_tally,mt_number,detec
     for body in list_of_bodies_to_tally:
         lines_list.append("\tdc " + body + "-c")
     lines_list.append('\tdr '+str(mt_number)+' void') # void can be replaced with the material_description but this is not needed
-
+    lines_list.append('\n')
     return lines_list
 
-def return_serpent_file_material_cards(components,material_dictionary):
+def write_list_to_file(filename_and_path,list_of_lines):
+    with open(filename_and_path, 'w') as serpent_input_file:
+        for line in list_of_lines:
+            serpent_input_file.write(line + '\n')
+    print('file written to ',filename_and_path)
+
+def return_serpent_file_material_cards(components,material_dictionary,output_folder):
 
     #relative_dir = os.path.basename(settings.output_folder_stl)
 
@@ -159,11 +223,39 @@ def return_serpent_file_material_cards(components,material_dictionary):
             if material_dictionary[component].material_card_name not in materials_already_added:
                 lines_for_file.append('\n\n')
 
-                lines_for_file.append(material_dictionary[component].serpent_material_card())
+                lines_for_file.append(material_dictionary[component].material_card(code='serpent'))
                 materials_already_added.append(material_dictionary[component].material_card_name)
             else:
                 print('material previous added')
-    return lines_for_file
+
+    write_list_to_file(os.path.join(output_folder,'materials'),lines_for_file)
+        
+
+    return ['include "materials"','\n','\n'] #lines_for_file
+
+
+
+def create_matfile_with_material_names(output_folder,material_dictionary):
+    #read in the matfile line by line, looks up the step files in the material dictionary
+    fname = os.path.join(output_folder,'matfile')
+    with open(fname) as f:
+        content = f.readlines()
+
+
+    new_content=[content[0]]
+    for i, line in enumerate(content[1:]):
+        filename=os.path.basename(line)
+        for material_name in material_dictionary.keys():
+            if filename.startswith(material_name):
+                new_content.append(material_dictionary[material_name].material_card_name+'\n')
+#                print('found', filename, material_name,material_dictionary[material_name].material_card_name )
+                break
+    
+    fname = os.path.join(output_folder,'matfile_renamed')
+    file_contents = ''.join(new_content)
+    with open(fname, 'w') as f:   
+        f.write(file_contents)
+        
 
 def return_plasma_source(plasma_source_name='EU_baseline_2015') :
 
@@ -210,14 +302,41 @@ def return_plasma_source(plasma_source_name='EU_baseline_2015') :
         return lines_for_file
 
 
+# def find_components(list_of_detailed_modules_components):
+#     print('parts = ',list_of_detailed_modules_components)
+#     print(type)
+#     dictionary_of_components=collections.defaultdict(list)
+#     if type(list_of_detailed_modules_components) !='list':
+#         list_of_detailed_modules_components=[list_of_detailed_modules_components]
+#     for item in list_of_detailed_modules_components['parts']:
+#         if type(item)==list:
+#             for entry in item:
+#                 for key,value in entry.iteritems():
+#                     dictionary_of_components[key].append(value)
+#         else:
+#             for key,value in item.iteritems():
+#                 dictionary_of_components[key].append(value)
+#     return dictionary_of_components
+
+# def find_components(list_of_detailed_modules_components):
+
+#     dictionary_of_components=collections.defaultdict(list)
+#     for item in list_of_detailed_modules_components:
+#         #print(item)
+#         for key,value in item.iteritems():
+#             dictionary_of_components[key].append(value)
+
+#     return dictionary_of_components
+
 def find_components(list_of_detailed_modules_components):
     #print('parts = ',list_of_detailed_modules_components)
+    #print(type)
     dictionary_of_components=collections.defaultdict(list)
-    if type(list_of_detailed_modules_components) !='list':
-        list_of_detailed_modules_components=[list_of_detailed_modules_components]
-    for item in list_of_detailed_modules_components:
-        for key,value in item.iteritems():
-            dictionary_of_components[key].append(value)
+
+    for list_entry in list_of_detailed_modules_components:
+            for key,value in list_entry.iteritems():
+                dictionary_of_components[key].append(value)
+
     return dictionary_of_components
 
 
@@ -238,7 +357,7 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
         
     serpent_file = []
 
-    serpent_file += return_serpent_file_head(neutronics_parameters_dictionary['include_umesh'])
+    serpent_file += return_serpent_file_head(neutronics_parameters_dictionary['include_umesh'],neutronics_parameters_dictionary['parts'])
     serpent_file += return_serpent_file_stl_parts(components,
                                                   material_dictionary,neutronics_parameters_dictionary['output_folder_stl'],
                                                   neutronics_parameters_dictionary['output_folder'])
@@ -251,11 +370,15 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
                                                    neutronics_parameters_dictionary['tallies'],
                                                    neutronics_parameters_dictionary['nps'])
 
-    serpent_file += return_serpent_file_material_cards(components, material_dictionary)
+    serpent_file += return_serpent_file_material_cards(components, material_dictionary, neutronics_parameters_dictionary['output_folder'])
+
+
+    if neutronics_parameters_dictionary['include_umesh'] == True:
+        create_matfile_with_material_names(output_folder=neutronics_parameters_dictionary['output_folder'],material_dictionary=material_dictionary)
     
     serpent_file += return_plasma_source()
 
-    for tally in tallies:
+    for tally in neutronics_parameters_dictionary['tallies']:
         print(tally)
         serpent_file += return_serpent_macroscopic_detectors(list_of_bodies_to_tally=tally['bodies'],
                                                              mt_number=tally['mt_number'],
@@ -264,10 +387,11 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
                                                              #material_description=materials[0], void is used 
                                                              )
 
-  
+    if neutronics_parameters_dictionary['include_umesh'] == True:
+        serpent_file +=['include "detector_n"']
+        serpent_file +=['include "detector_p"']
 
-    # if settings.include_um_mesh == 'yes':
-    #     serpent_file += 'include "detector"'
+
     #
     # mesh = False
     # if mesh == True:
@@ -276,12 +400,9 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
     #     serpent_file += return_serpent_file_mesh('neutron_multiplication')
     directory_path_to_serpent_output = os.path.join(neutronics_parameters_dictionary['output_folder'], 'serpent_input_file.serp')
 
-    with open(directory_path_to_serpent_output, 'w') as serpent_input_file:
-        for line in serpent_file:
-            serpent_input_file.write(line + '\n')
-    print('file written to ',directory_path_to_serpent_output)
+    write_list_to_file(filename_and_path=directory_path_to_serpent_output,list_of_lines=serpent_file)
 
-    return directory_path_to_serpent_output,number_of_stl_parts
+    return directory_path_to_serpent_output, number_of_stl_parts
 
 
 

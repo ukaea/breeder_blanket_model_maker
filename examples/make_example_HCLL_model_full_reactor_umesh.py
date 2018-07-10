@@ -73,7 +73,7 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory,
 
         }
 
-        if module == input_files[-1]:
+        if module == input_files[12]:
             blanket_geometry_parameters.update({
                 #The following three arguments are optional, if included the model will include cooling channels on the first wall
                 'cooling_channel_offset_from_first_wall': cooling_channel_offset_from_first_wall,
@@ -153,20 +153,20 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
                              'include_umesh':True,
                              'output_folder_stl':os.path.join(output_directory,'stl'),
                              'material_dictionary':material_dictionary,
-                             'plot_serpent_geometry':False,
+                             'plot_serpent_geometry':True,
                              'nps':nps,
-                             'tallies':[{'name':'tbr',
-                                            'bodies':['lithium_lead'],
-                                            'mt_number':-55,
-                                            'particle_type':'n'},
-                                        {'name':'neutron_heating',
-                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_lithium_lead','back_helium','cooling_plate_homogenised','end_caps_homogenised','first_wall_homogenised',],
-                                            'mt_number':-4,
-                                            'particle_type':'n'},
-                                        {'name':'photon_heating',
-                                            'bodies':['armour','lithium_lead','back_plate_1','back_plate_2','back_plate_3','back_lithium_lead','back_helium','cooling_plate_homogenised','end_caps_homogenised','first_wall_homogenised',],
-                                            'mt_number':-26,
-                                            'particle_type':'p'},                                            
+                             'tallies':[{'name': 'tbr',
+                                         'bodies': ['lithium_lead'],
+                                         'mt_number':-55,
+                                         'particle_type':'n'},
+                                        {'name': 'neutron_heating',
+                                         'bodies': ['armour', 'lithium_lead', 'back_plate_1','back_plate_2','back_plate_3','back_lithium_lead','back_helium','cooling_plate_homogenised','end_caps_homogenised','first_wall_homogenised',],
+                                         'mt_number':-4,
+                                         'particle_type':'n'},
+                                        {'name': 'photon_heating',
+                                         'bodies': ['armour', 'lithium_lead', 'back_plate_1','back_plate_2','back_plate_3','back_lithium_lead','back_helium','cooling_plate_homogenised','end_caps_homogenised','first_wall_homogenised',],
+                                         'mt_number':-26,
+                                         'particle_type':'p'},
                                        ]
                              }
 
@@ -175,7 +175,7 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
 
 output_directory='/home/jshim/detailed_HCLL'
 list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type ='HCLL',
-                                                                input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1, 3)],#27,
+                                                                input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1,27)],#27,
                                                                 output_directory = output_directory,
                                                                 poloidal_lithium_lead_in_mm =80.0)
 
@@ -187,17 +187,15 @@ extra_parts = read_in_step_files_and_save_as_seperate_stl_files(read_folder='/ho
                                                                 write_folder=os.path.join(output_directory,'stl'),
                                                                 ignore_files=['shell.stp'])
 
-list_of_detailed_modules_parts.update(extra_parts)
+list_of_detailed_modules_parts.append(extra_parts)
 
 material_dictionary=define_neutronics_materials(enrichment_fraction=0.8)
 
 neutronics_parameters = define_neutronics_model_parmeters(list_detailed_modules_parts=list_of_detailed_modules_parts,
                                                           material_dictionary=material_dictionary,
                                                           output_directory=output_directory,
-                                                          nps=10000)
+                                                          nps=100000)
 
-directory_path_to_serpent_output,number_of_stl_parts= make_serpent_stl_based_input_file(neutronics_parameters)
+directory_path_to_serpent_output, number_of_stl_parts = make_serpent_stl_based_input_file(neutronics_parameters)
 
 tally_dict = run_serpent_locally(directory_path_to_serpent_output)
-
-

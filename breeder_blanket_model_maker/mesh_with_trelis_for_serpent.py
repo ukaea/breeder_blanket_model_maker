@@ -186,37 +186,38 @@ elements_in_each_volume=[]
 for vols in volumes_in_each_step_file:
     print('volumes in this file ',vols)
     elements_in_volume = cubit.parse_cubit_list("element", " in volume " +' '.join(vols))
-    print('elements_in_volume',elements_in_volume)
+    #print('elements_in_volume',elements_in_volume)
     #elements_in_volume = cubit.parse_cubit_list("element", " in volume 1")
     #print('elements_in_volume',elements_in_volume)
     elements_in_each_volume.append(elements_in_volume)
-    print('elements_in_volume',' '.join(vols))
+    #print('elements_in_volume',' '.join(vols))
 
 
 def rename_files_with_prefix(prefix):
   if prefix!='':
-    os.rename('serpent_mesh/constant/polyMesh/matfile'   , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'matfile' ))
-    os.rename('serpent_mesh/constant/polyMesh/boundary'  , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'boundary' ))
-    os.rename('serpent_mesh/constant/polyMesh/faces'     , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'faces' ))
-    os.rename('serpent_mesh/constant/polyMesh/neighbour' , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'neighbour' ))
-    os.rename('serpent_mesh/constant/polyMesh/owner'     , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'owner' ))
-    os.rename('serpent_mesh/constant/polyMesh/points'    , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'points' ))
-    os.rename('serpent_mesh/constant/polyMesh/scaled_points'    , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'scaled_points' ))
-    os.rename('serpent_mesh/constant/polyMesh/detector_p'    , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'detector_p' ))
-    os.rename('serpent_mesh/constant/polyMesh/detector_n'    , os.path.join('serpent_mesh/constant/polyMesh/',prefix+'detector_n' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','matfile')   , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'matfile' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','boundary')  , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'boundary' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','faces')     , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'faces' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','neighbour') , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'neighbour' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','owner')     , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'owner' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','points')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'points' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','scaled_points')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'scaled_points' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','detector_p')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'detector_p' ))
+    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','detector_n')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'detector_n' ))
   else:
     print('no prefix given')
 
 def move_um_mesh_files(output_dir):
-  for file in ['matfile','boundary','faces','neighbour','owner','points','scaled_points','detector_p','detector_n']:
-    print(os.path.join('serpent_mesh/constant/polyMesh/',file))
-    os.rename(os.path.join('serpent_mesh/constant/polyMesh/',file),os.path.join( output_dir,file) )
+  for file in ['matfile', 'boundary', 'faces', 'neighbour', 'owner', 'points', 'scaled_points','detector_p','detector_n']:
+    print('renaming ',os.path.join(output_dir, 'serpent_mesh','constant','polyMesh',file))
+    print('   to ',os.path.join(output_dir, file))
+    os.rename(os.path.join(output_dir, 'serpent_mesh','constant','polyMesh',file),os.path.join( output_dir,file) )
 
 
-def write_openfoam_material_card(elements_in_each_volume,materials_list_id):
-  file_name_and_path ='serpent_mesh/constant/polyMesh/matfile'
+def write_openfoam_material_card(elements_in_each_volume,materials_list_id,output_dir):
+  file_name_and_path = os.path.join(output_dir, 'serpent_mesh', 'constant', 'polyMesh', 'matfile')
   #outputfile = open(file_name_and_path, 'w')
-  print('elements_in_each_volume',elements_in_each_volume)
+  #print('elements_in_each_volume',elements_in_each_volume)
   print('materials_list_id',materials_list_id)
   #file_name_and_path =os.path.sep.join['serpent_mesh','constant','polyMesh','matfile']
   print('file_name_and_path',file_name_and_path)
@@ -232,7 +233,7 @@ def write_openfoam_material_card(elements_in_each_volume,materials_list_id):
       elements_and_materials.append((element,mat_id))
       elements_list.append(element)
       #print(element,mat_id)
-  print('elements_and_materials',elements_and_materials)
+  #print('elements_and_materials',elements_and_materials)
   sorted_materials_ids =[x for (y,x) in sorted(elements_and_materials)]
   sorted_elements = sorted(elements_list)
   #print('sorted_elements',sorted_elements)
@@ -249,9 +250,9 @@ def write_openfoam_material_card(elements_in_each_volume,materials_list_id):
 
 def write_serpent_detector():
   elements_in_all_volume = cubit.parse_cubit_list("element", "in volume all")
-  print('elements_in_all_volume_serpe',elements_in_all_volume)
-  file_name_and_path ='serpent_mesh/constant/polyMesh/detector_n'
-  print('file_name_and_path',file_name_and_path)
+  #print('elements_in_all_volume_serpe',elements_in_all_volume)
+  file_name_and_path = os.path.join(output_dir, 'serpent_mesh/constant/polyMesh/detector_n')
+  print('file_name_and_path', file_name_and_path)
   outputfile = open(file_name_and_path, 'w')
   outputfile.write('det umesh_det_n n \n')
   outputfile.write('    dumsh all_um_geometry \n')
@@ -260,8 +261,8 @@ def write_serpent_detector():
     outputfile.write(str(element_counter)+' ' +str(element_counter)+'\n')
   outputfile.close()  
   elements_in_all_volume = cubit.parse_cubit_list("element", "in volume all")
-  print('elements_in_all_volume_serpe',elements_in_all_volume)
-  file_name_and_path ='serpent_mesh/constant/polyMesh/detector_p'
+  #print('elements_in_all_volume_serpe',elements_in_all_volume)
+  file_name_and_path = os.path.join(output_dir,'serpent_mesh/constant/polyMesh/detector_p')
   print('file_name_and_path',file_name_and_path)
   outputfile = open(file_name_and_path, 'w')
   outputfile.write('det umesh_det_p p \n')
@@ -274,7 +275,7 @@ def write_serpent_detector():
 
 def rewrite_serpent_points(scale):
     print('scaling points by ',scale)
-    file_name_and_path ='serpent_mesh/constant/polyMesh/points'
+    file_name_and_path = os.path.join(output_dir,'serpent_mesh','constant','polyMesh','points')
     with open(file_name_and_path) as f:
         lines = f.read().splitlines()
     new_lines=[]
@@ -286,23 +287,22 @@ def rewrite_serpent_points(scale):
                 coords.append(str(new_coord))
             line = '('+' '.join(coords)+')'
         new_lines.append(line)
-    new_file_name_and_path ='serpent_mesh/constant/polyMesh/scaled_points' 
+    new_file_name_and_path = os.path.join(output_dir,'serpent_mesh','constant','polyMesh','scaled_points')
     with open(new_file_name_and_path,"w") as f2:
         for line in new_lines:
             f2.write(line+'\n')
     print(new_lines)
     
 
-
+os.mkdir(os.path.join(output_dir, 'serpent_mesh'))
+os.mkdir(os.path.join(output_dir, 'serpent_mesh', 'constant'))
+os.mkdir(os.path.join(output_dir, 'serpent_mesh', 'constant', 'polyMesh'))
 
 write_serpent_detector()
 
+write_openfoam_material_card(elements_in_each_volume, materials_list_id,output_dir)
 
-write_openfoam_material_card(elements_in_each_volume,materials_list_id)
-
-
-
-cubit.cmd('export openfoam "serpent_mesh" overwrite')
+cubit.cmd('export openfoam "' + os.path.join(output_dir, 'serpent_mesh') + '" overwrite')
 
 rewrite_serpent_points(scale=0.001)
 

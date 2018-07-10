@@ -169,25 +169,52 @@ def mccad_convert_cad_to_csg(step_filepath, output_folder):
 
 
 @time_function(logtime_data)
-def save_components_as_umesh(dictionary_of_parts, output_folder, mesh_component_prefix, csg_envelope):
+def save_components_as_umesh(dictionary_of_parts, output_folder,output_folder_step, mesh_component_prefix):
     # this goes through the dictionary of parts and finds slice envelope
     # converts slice envelope to CSG with mccad
     #
 
+    files_to_not_mesh = ['slice_envelope', 'slice_first_wall_homogenised']
+
     try:
         os.makedirs(output_folder)
+        os.makedirs(output_folder_step)
     except:
         pass
 
+    mccad_make_config_file(output_folder_step)
 
-    mccad_make_config_file(output_folder)
-
-
-    mccad_convert_cad_to_csg(dictionary_of_parts['slice_envelope']['step_filename'],output_folder)
+    mccad_convert_cad_to_csg(dictionary_of_parts['slice_envelope']['step_filename'], output_folder_step)
 
 
-    #run trelis with the slice materials and slice files
-    #mesh_component_prefix
+
+    aprepro_output_file_string = ' "output_dir=' + "'" + output_folder + "'" + '"'
+    aprepro_element_type = ' "element_type=' + "'tet'" + '"'
+    aprepro_input_file_string = ' "inputs=' + "'"
+    aprepro_materials_string = ' "materials=' + "'"
+
+    list_of_un_mesh_input_files=[]
+    for component, values in dictionary_of_parts.iteritems(): # will become d.items() in py3k
+        if type(component) == str:
+            if component.startswith(mesh_component_prefix) and component not in files_to_not_mesh:
+                if 'step_filename' in values.keys():
+                    list_of_un_mesh_input_files.append(values['step_filename'])
+
+    for component in list_of_un_mesh_input_files:
+        aprepro_input_file_string = aprepro_input_file_string + component + ','
+        aprepro_materials_string = aprepro_materials_string + component + ','
+    aprepro_input_file_string = aprepro_input_file_string[:-1] + "'" + '"'
+    aprepro_materials_string = aprepro_materials_string[:-1] + "'" + '"'
+
+    os.system('rm cubit*.jou')
+    path_to_trelis_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'mesh_with_trelis_for_serpent.py')
+
+    print('trelis '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+
+    os.system('trelis -nographics -batch '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+    #this option runs with gui
+    #os.system('trelis '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+
 
     return dictionary_of_parts
 

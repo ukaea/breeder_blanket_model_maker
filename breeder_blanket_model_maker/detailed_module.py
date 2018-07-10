@@ -32,9 +32,9 @@ def detailed_module(dict_or_list_of_blanket_geometry_parameters):
     #HCLL_detailed_module(blanket_geometry_parameters_dict)
 
     if blanket_geometry_parameters_dict['blanket_type'].upper() == 'HCLL':
-       for blanket in blanket_geometry_parameters_list:
-          detailed_modules_parts = HCLL_detailed_module(blanket)
-       #detailed_modules_parts = p.map(HCLL_detailed_module,blanket_geometry_parameters_list) 
+       #for blanket in blanket_geometry_parameters_list:
+       #   detailed_modules_parts = HCLL_detailed_module(blanket)
+       detailed_modules_parts = p.map(HCLL_detailed_module,blanket_geometry_parameters_list) 
 
     elif blanket_geometry_parameters_dict['blanket_type'].upper() == 'DCLL':
        detailed_modules_parts = p.map(DCLL_detailed_module, blanket_geometry_parameters_list) 

@@ -220,36 +220,36 @@ def HCLL_detailed_module(blanket_parameters_dict):
 
         dictionary_of_parts['slice_cooling_plate_coolant']['part'] = list_of_cooling_pipes
         dictionary_of_parts['slice_cooling_plate_material']['part'] = list_of_structure
-
-      prefix='_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
+ 
+      prefix = '_' + os.path.splitext(os.path.split(envelope_directory_filename)[-1])[0]
 
       
 
 
       if 'step' in output_files:
-          dictionary_of_parts=save_components_as_step(dictionary_of_parts = dictionary_of_parts, 
+          dictionary_of_parts = save_components_as_step(dictionary_of_parts = dictionary_of_parts, 
                                                       output_folder = output_folder_step, 
                                                       filename_prefix =prefix)
 
       if 'merged_stl' in output_files:
-          dictionary_of_parts=save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
-                                                                 output_folder=output_folder_merged_stl,
-                                                                 blanket_type=blanket_parameters_dict['blanket_type'])
+          dictionary_of_parts = save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,
+                                                                   output_folder=output_folder_merged_stl,
+                                                                   blanket_type=blanket_parameters_dict['blanket_type'])
 
       if 'stl' in output_files:
-          dictionary_of_parts=save_components_as_stl(dictionary_of_parts = dictionary_of_parts, 
+          dictionary_of_parts = save_components_as_stl(dictionary_of_parts = dictionary_of_parts, 
                                                      output_folder = output_folder_stl)
 
       if 'h5m' in output_files:
-          dictionary_of_parts=save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, 
-                                                          output_folder = output_folder_h5m, 
-                                                          blanket_type=blanket_parameters_dict['blanket_type'])
+          dictionary_of_parts = save_components_as_h5m_file(dictionary_of_parts = dictionary_of_parts, 
+                                                            output_folder = output_folder_h5m, 
+                                                            blanket_type=blanket_parameters_dict['blanket_type'])
 
 
       if 'umesh' in output_files:
-          dictionary_of_parts=save_components_as_umesh(dictionary_of_parts = dictionary_of_parts, 
-                                                       output_folder = output_folder_step,
-                                                       mesh_component_prefix='slice_',
-                                                       csg_envelope='slice_envelope.step')
+          dictionary_of_parts = save_components_as_umesh(dictionary_of_parts = dictionary_of_parts,
+                                                         output_folder = output_folder,
+                                                         output_folder_step=output_folder_step,
+                                                         mesh_component_prefix='slice_')
 
       return dictionary_of_parts #.update({'logtime_data':logtime_data})
