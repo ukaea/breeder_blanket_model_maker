@@ -57,24 +57,20 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory,
     list_of_compressed_arguments=[]
     for module in input_files:
 
-        blanket_geometry_parameters =  {
-
-            'blanket_type' : blanket_type,
-            'plasma_filename' :'/home/jshim/Eurofusion_baseline_2016/envelopes/plasma.step',
-            'envelope_filename' : module,
-            'output_folder' : output_directory,
-            'output_files':['step','stl'],
-            'first_wall_poloidal_fillet_radius' : 50,
-            'armour_thickness' : 2,
-            'first_wall_thickness' : first_walls_thickness_mm,
-            'end_cap_thickness' : 25,
-            'back_plates_thicknesses' : back_plates_thicknesses_ordered_dict,
-            'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
-
-        }
-
         if module == input_files[12]:
-            blanket_geometry_parameters.update({
+            blanket_geometry_parameters =  {
+                'blanket_type' : blanket_type,
+                'plasma_filename' :'/home/jshim/Eurofusion_baseline_2016/envelopes/plasma.step',
+                'envelope_filename' : module,
+                'output_folder' : output_directory,
+                'output_files':['step','stl','umesh'],
+                'first_wall_poloidal_fillet_radius' : 50,
+                'armour_thickness' : 2,
+                'first_wall_thickness' : first_walls_thickness_mm,
+                'end_cap_thickness' : 25,
+                'back_plates_thicknesses' : back_plates_thicknesses_ordered_dict,
+                'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
+
                 #The following three arguments are optional, if included the model will include cooling channels on the first wall
                 'cooling_channel_offset_from_first_wall': cooling_channel_offset_from_first_wall,
                 'first_wall_channel_radial_mm': first_wall_channel_radial_mm,
@@ -84,9 +80,21 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory,
                 'cooling_plates_channel_poloidal_mm':cooling_plates_channel_poloidal_mm,
                 'cooling_plates_channel_radial_mm':cooling_plates_channel_radial_mm,
 
-                'output_files':['step','stl','umesh'],
-                })
-
+                }
+        else:
+            blanket_geometry_parameters =  {
+                'blanket_type' : blanket_type,
+                'plasma_filename' :'/home/jshim/Eurofusion_baseline_2016/envelopes/plasma.step',
+                'envelope_filename' : module,
+                'output_folder' : output_directory,
+                'output_files':['step','stl'],
+                'first_wall_poloidal_fillet_radius' : 50,
+                'armour_thickness' : 2,
+                'first_wall_thickness' : first_walls_thickness_mm,
+                'end_cap_thickness' : 25,
+                'back_plates_thicknesses' : back_plates_thicknesses_ordered_dict,
+                'poloidal_segmentations' : poloidal_segmentations_ordered_dict,
+                }                
 
 
         list_of_compressed_arguments.append(blanket_geometry_parameters)
@@ -96,8 +104,9 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory,
 def define_neutronics_materials(enrichment_fraction):
 
     mat_lithium_lead =Compound('Pb84.2Li15.8',
-                              density_atoms_per_barn_per_cm=3.2720171E-2,
-                              enriched_isotopes=[Isotope('Li',6,abundance=enrichment_fraction),
+                               color=((1.0/256)*0,(1.0/256)*111,(1.0/256)*69),#ukaea green
+                               density_atoms_per_barn_per_cm=3.2720171E-2,
+                               enriched_isotopes=[Isotope('Li',6,abundance=enrichment_fraction),
                                                  Isotope('Li',7,abundance=1.0-enrichment_fraction)])
 
     material_dictionary = {  'armour': mat_Tungsten,
@@ -153,7 +162,7 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
                              'include_umesh':True,
                              'output_folder_stl':os.path.join(output_directory,'stl'),
                              'material_dictionary':material_dictionary,
-                             'plot_serpent_geometry':True,
+                             'plot_serpent_geometry':False,
                              'nps':nps,
                              'tallies':[{'name': 'tbr',
                                          'bodies': ['lithium_lead'],
@@ -174,8 +183,8 @@ def define_neutronics_model_parmeters(list_detailed_modules_parts,material_dicti
 
 
 output_directory='/home/jshim/detailed_HCLL'
-list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type ='HCLL',
-                                                                input_files= ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1,27)],#27,
+list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type = 'HCLL',
+                                                                input_files = ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1,27)],#27,
                                                                 output_directory = output_directory,
                                                                 poloidal_lithium_lead_in_mm =80.0)
 
@@ -189,7 +198,7 @@ extra_parts = read_in_step_files_and_save_as_seperate_stl_files(read_folder='/ho
 
 list_of_detailed_modules_parts.append(extra_parts)
 
-material_dictionary=define_neutronics_materials(enrichment_fraction=0.8)
+material_dictionary = define_neutronics_materials(enrichment_fraction=0.8)
 
 neutronics_parameters = define_neutronics_model_parmeters(list_detailed_modules_parts=list_of_detailed_modules_parts,
                                                           material_dictionary=material_dictionary,
@@ -198,4 +207,5 @@ neutronics_parameters = define_neutronics_model_parmeters(list_detailed_modules_
 
 directory_path_to_serpent_output, number_of_stl_parts = make_serpent_stl_based_input_file(neutronics_parameters)
 
-tally_dict = run_serpent_locally(directory_path_to_serpent_output)
+tally_dict = run_serpent_locally(filename_and_path = directory_path_to_serpent_output, 
+                                 plot = neutronics_parameters['plot_serpent_geometry'])

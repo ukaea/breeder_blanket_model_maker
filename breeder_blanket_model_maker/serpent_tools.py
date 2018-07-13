@@ -65,10 +65,10 @@ def find_tally_and_error(filepath):
     return tally_results_dict
 
 
-def run_serpent_locally(path_and_file):
+def run_serpent_locally(filename_and_path,plot):
 
-    print(path_and_file)
-    folder , file = os.path.split(path_and_file)
+    print(filename_and_path)
+    folder , file = os.path.split(filename_and_path)
 
 
     os.system('cd '+folder)
@@ -79,12 +79,15 @@ def run_serpent_locally(path_and_file):
     os.system('rm serpent_input_file.serp_res.m')
     os.system('rm serpent_input_file.serp.seed')
     os.system('rm serpent_input_file.serp.out')
-    os.system('sss2 '+file+' -omp '+num_cpu)
+    if plot == False:
+        os.system('sss2 '+file+' -omp '+num_cpu + ' -noplot')
+    if plot == True:
+        os.system('sss2 '+file+' -omp '+num_cpu)
 
     os.system('cd ../..')
     os.chdir(cwd)
 
-    tally_dict = find_tally_and_error(path_and_file+'_det0.m')
+    tally_dict = find_tally_and_error(filename_and_path+'_det0.m')
 
     return tally_dict
 

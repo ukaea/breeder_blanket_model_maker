@@ -61,7 +61,7 @@ def return_serpent_file_head(include_um_mesh,list_of_detailed_modules_parts):
     lines_for_file.append('%     sss2 filename')
     lines_for_file.append('\n\n')
 
-    lines_for_file.append('surf 20  sph 0 0 0 1000 % edge surface for the model \n\n')
+    lines_for_file.append('surf 20  sph 0 0 0 4000 % edge surface for the model \n\n')
     
 
     if include_um_mesh==True:
@@ -100,7 +100,7 @@ def return_serpent_file_head(include_um_mesh,list_of_detailed_modules_parts):
 
     return lines_for_file
 
-def return_serpent_file_stl_parts(components,material_dictionary,output_folder_stl,output_folder):
+def return_serpent_file_stl_parts(components,material_dictionary,output_folder_stl,output_folder,include_umesh):
 
 
     print(output_folder_stl)
@@ -113,12 +113,23 @@ def return_serpent_file_stl_parts(components,material_dictionary,output_folder_s
 
     print('material_dictionary',material_dictionary)
 
+    list_of_non_stl_components = []
+    if include_umesh == True:
+        for component in components:
+            if component.startswith('slice_'):
+                list_of_non_stl_components.append(component)
+
+        list_of_non_stl_components.append('first_wall_material')
+        list_of_non_stl_components.append('first_wall_coolant')
+
+
+
     lines_for_file = []
     #number_of_stl_parts=0
     for component in components:
         # print(component)
         # if component['stl']==True:
-        if component != 'slice_envelope' and component != 'slice_first_wall_homogenised':
+        if component not in list_of_non_stl_components:
             print('body ' + component + '-b ' + component + '-c ')
             lines_for_file.append('body ' + component + '-b ' + component + '-c ' + material_dictionary[component].material_card_name)
             for part in components[component]:
@@ -139,7 +150,7 @@ def return_serpent_file_stl_parts(components,material_dictionary,output_folder_s
 
     return lines_for_file#,number_of_stl_parts
 
-def return_serpent_file_run_params(plot_serpent_geometry,tallies,nps):
+def return_serpent_file_run_params(tallies,nps):
 
 
     lines_for_file=[]
@@ -178,17 +189,30 @@ def return_serpent_file_run_params(plot_serpent_geometry,tallies,nps):
     lines_for_file.append('set nps ' + str(nps) + ' ' + str(batches) + ' % neutron population, bunch count')
     lines_for_file.append('set outp ' + str(batches + 1) + ' %only prints output after batchs +1, ie at the end')
 
+    lines_for_file.append('plot 2 1000 1000 20  -2100 2100 -2100 2100 % side view of stl geometry')
+    lines_for_file.append('plot 2 1000 1000 90  -2100 2100 -2100 2100 % side view of stl and um geometry')
+    lines_for_file.append('plot 3 1000 1000 10   -2100 2100 -2100 2100 % top view around the middle of the reactor')
+
+    
+    number_of_images_made = len(range(-1500, 1500, 20))+len(range(-1800, 1800, 20)) + 3
+    lines_for_file.append("% ImageMagick command for making animated gif")
+
+    lines_for_file.append("% convert 'serpent_input_file_ll.serp_geom%d.png[4-"+str(number_of_images_made)+"]' geometry_sweep.gif")
+    lines_for_file.append("% convert geometry_sweep.gif -gravity south -stroke  none -fill white -pointsize 22 -annotate 0 'Visualisation of EU DEMO geometry with detailed breeder blankets by J.Shimwell' geometry_sweep.gif")
+    
+
+    lines_for_file.append('% sweeping top to bottom plot')
+    for x in range(-1500, 1500, 20): 
+        lines_for_file.append('plot 3 1000 1000 '+str(x)+ ' -2100 2100 -2100 2100')
+
+    lines_for_file.append('% sweeping front to back plot')
+    for x in range(-1800, 1800, 20):
+        lines_for_file.append('plot 2 1000 1000 '+str(x)+ ' -2100 2100 -2100 2100')    
+
+   
 
 
-    if plot_serpent_geometry == True:
 
-        lines_for_file.append('plot 1 10000 10000 0.2  -2100 2100 -2100 2100')
-        lines_for_file.append('plot 2 10000 10000 0.2  -2100 2100 -2100 2100 %plot py pixels pixels origin')
-        lines_for_file.append('plot 3 10000 10000 0.2  -2100 2100 -2100 2100')
-        
-        lines_for_file.append('plot 1 16800 16800 -2  -2100 2100 -2100 2100')
-        lines_for_file.append('plot 2 16800 16800 -2  -2100 2100 -2100 2100 %plot py pixels pixels origin')
-        lines_for_file.append('plot 3 16800 16800 -2  -2100 2100 -2100 2100')
     lines_for_file.append('\n\n')
 
     return lines_for_file
@@ -357,17 +381,19 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
         
     serpent_file = []
 
-    serpent_file += return_serpent_file_head(neutronics_parameters_dictionary['include_umesh'],neutronics_parameters_dictionary['parts'])
+    serpent_file += return_serpent_file_head(neutronics_parameters_dictionary['include_umesh'],
+                                             neutronics_parameters_dictionary['parts'])
     serpent_file += return_serpent_file_stl_parts(components,
-                                                  material_dictionary,neutronics_parameters_dictionary['output_folder_stl'],
-                                                  neutronics_parameters_dictionary['output_folder'])
+                                                  material_dictionary,
+                                                  neutronics_parameters_dictionary['output_folder_stl'],
+                                                  neutronics_parameters_dictionary['output_folder'],
+                                                  neutronics_parameters_dictionary['include_umesh'])
 
     number_of_stl_parts=0
     for line in serpent_file:
         number_of_stl_parts=number_of_stl_parts+line.count('.stl')
 
-    serpent_file += return_serpent_file_run_params(neutronics_parameters_dictionary['plot_serpent_geometry'],
-                                                   neutronics_parameters_dictionary['tallies'],
+    serpent_file += return_serpent_file_run_params(neutronics_parameters_dictionary['tallies'],
                                                    neutronics_parameters_dictionary['nps'])
 
     serpent_file += return_serpent_file_material_cards(components, material_dictionary, neutronics_parameters_dictionary['output_folder'])

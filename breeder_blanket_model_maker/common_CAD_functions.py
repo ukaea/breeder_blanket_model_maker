@@ -709,32 +709,40 @@ def find_largest_face(solid_or_list_of_faces,n=1):
 @time_function(logtime_data)
 def chop_top_and_bottom_from_cooling_plate(plate, channel_poloidal_height,plate_poloidal_height):
 
-    #print('plate',plate)
-
     largest_face, largest_face_id=find_largest_face(plate)
+    #print(largest_face, largest_face_id)
+    
+    second_largest_face, second_largest_face_id=find_largest_face(plate,2)
+    #print(second_largest_face, second_largest_face_id)
 
     thickness_of_top_bottom_layers = (plate_poloidal_height-channel_poloidal_height)/2.0
+    #print('thickness_of_top_bottom_layers',thickness_of_top_bottom_layers)
+    
+    largest_face.scale(2.0, largest_face.CenterOfMass)
+    second_largest_face.scale(2.0, second_largest_face.CenterOfMass)
 
-#    poly_face.scale(2.0, poly_face.CenterOfMass)
+    new_face1 = largest_face.extrude(largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
+    
+    new_face2 = second_largest_face.extrude(second_largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
 
-    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * thickness_of_top_bottom_layers)
+    top = new_face1.common(plate) #new_face1.fuse(new_face2)
+    #print('top vol',top.Volume)
+    
+    bottom = new_face2.common(plate) #new_face1.fuse(new_face2)
+    #print('bottom vol',bottom.Volume)    
+    
+    #top.exportStep('/home/jshim/detailed_HCLL/step/top.step')  
+    #bottom.exportStep('/home/jshim/detailed_HCLL/step/bottom.step')  
 
-    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
+    middle = (plate.cut(top)).cut(bottom)
+    #print('mid vol',middle.Volume)
 
-    top = new_face1.fuse(new_face2)
+    top_bottom = plate.cut(middle)
+    
+    #middle.exportStep('/home/jshim/detailed_HCLL/step/middle.step')
+    #top_bottom.exportStep('/home/jshim/detailed_HCLL/step/top_bottom.step')
 
-    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -(channel_poloidal_height +thickness_of_top_bottom_layers ))
-
-    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * (channel_poloidal_height +thickness_of_top_bottom_layers ))
-
-    middle = new_face1.fuse(new_face2)
-
-    pre_skinny_div_to_cool = plate.common(middle)
-    skinny_div_to_cool = pre_skinny_div_to_cool.cut(top)
-
-    top_bottom = plate.cut(skinny_div_to_cool)
-
-    return skinny_div_to_cool, top_bottom
+    return middle, top_bottom
 
 
 @time_function(logtime_data)
