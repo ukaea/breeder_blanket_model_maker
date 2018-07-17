@@ -92,7 +92,7 @@ def save_components_as_step(dictionary_of_parts,output_folder,filename_prefix=''
         pass
 
     for component in dictionary_of_parts:
-        dictionary_of_parts[component]['step_filename'] = os.path.join(output_folder,component +filename_prefix+ '.step')
+        dictionary_of_parts[component]['step_filename'] = os.path.join(output_folder, component +filename_prefix+ '.step')
 
         component_compound = Part.makeCompound(dictionary_of_parts[component]['part'])
 
@@ -115,32 +115,127 @@ def read_in_envelope_file(envelope_directory_filename):
 
     if os.path.isfile(envelope_directory_filename):
       envelope = Part.read(envelope_directory_filename)
-    elif os.path.isfile(pkg_resources.resource_filename('breeder_blanket_model_maker',envelope_directory_filename)):
-      envelope = Part.read(pkg_resources.resource_filename('breeder_blanket_model_maker',envelope_directory_filename))
+    elif os.path.isfile(pkg_resources.resource_filename('breeder_blanket_model_maker', envelope_directory_filename)):
+      envelope = Part.read(pkg_resources.resource_filename('breeder_blanket_model_maker', envelope_directory_filename))
     else:
       raise ValueError('Input envelope file was not found')
     return envelope
 
 
+@time_function(logtime_data)
+def mccad_make_config_file(output_folder):
+    
+    #write config file McCadConfig.txt
+
+    print(os.path.join(output_folder, "McCadConfig.txt"))
+    F = open(os.path.join(output_folder, "McCadConfig.txt"), "w")
+         
+    string =  'InitSurfNb               2100 \n'
+    string += 'InitCellNb               100 \n'
+    string += 'WriteCollisionFile       1 \n'
+    string += 'MinimumInputSolidVolume  1.00 \n'
+    string += 'MinimumVoidVolume        1.25e2 \n'
+    string += 'MinimumSizeOfDecompositionFaceArea   50 \n'
+    string += 'MinimumNumberOfSamplePoints 50 \n'
+    string += 'MaximumNumberOfSamplePoints 100 \n'
+    string += 'XResolution  0.001 \n'
+    string += 'YResolution  0.001 \n'
+    string += 'RResolution  0.00314 \n'
+    string += 'MaxDecomposeDepth 15 \n'
+    string += 'MaxCellExpressionLength 500 \n'
+    string += 'Tolerance  1e-4 \n'
+    string += 'VoidGenerate 0 \n'
+    string += '. \n'
+
+    F.write(string)
+    print(string)
+
+    F.close()
 
 @time_function(logtime_data)
-def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
+def mccad_convert_cad_to_csg(step_filepath, output_folder):
+    current_dir = os.getcwd()
+    os.chdir(output_folder)
+
+    step_filepath = os.path.basename(step_filepath)
+
+    os.system('McCad -d ' + step_filepath + ' -1')
+    print('McCad -d ' + step_filepath + ' -1')
+    os.system('McCad -m D_' + step_filepath)
+    print('McCad -m D_' + step_filepath)
+
+    os.chdir(current_dir)
+
+
+
+@time_function(logtime_data)
+def save_components_as_umesh(dictionary_of_parts, output_folder,output_folder_step, mesh_component_prefix):
+    # this goes through the dictionary of parts and finds slice envelope
+    # converts slice envelope to CSG with mccad
+    #
+
+    files_to_not_mesh = ['slice_envelope', 'slice_first_wall_homogenised']
+
+    try:
+        os.makedirs(output_folder)
+        os.makedirs(output_folder_step)
+    except:
+        pass
+
+    mccad_make_config_file(output_folder_step)
+
+    mccad_convert_cad_to_csg(dictionary_of_parts['slice_envelope']['step_filename'], output_folder_step)
+
+
+
+    aprepro_output_file_string = ' "output_dir=' + "'" + output_folder + "'" + '"'
+    aprepro_element_type = ' "element_type=' + "'tet'" + '"'
+    aprepro_input_file_string = ' "inputs=' + "'"
+    aprepro_materials_string = ' "materials=' + "'"
+
+    list_of_un_mesh_input_files=[]
+    for component, values in dictionary_of_parts.iteritems(): # will become d.items() in py3k
+        if type(component) == str:
+            if component.startswith(mesh_component_prefix) and component not in files_to_not_mesh:
+                if 'step_filename' in values.keys():
+                    list_of_un_mesh_input_files.append(values['step_filename'])
+
+    for component in list_of_un_mesh_input_files:
+        aprepro_input_file_string = aprepro_input_file_string + component + ','
+        aprepro_materials_string = aprepro_materials_string + component + ','
+    aprepro_input_file_string = aprepro_input_file_string[:-1] + "'" + '"'
+    aprepro_materials_string = aprepro_materials_string[:-1] + "'" + '"'
+
+    os.system('rm cubit*.jou')
+    path_to_trelis_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'mesh_with_trelis_for_serpent.py')
+
+    print('trelis '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+
+    os.system('trelis -nographics -batch '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+    #this option runs with gui
+    #os.system('trelis '+ path_to_trelis_script+aprepro_output_file_string+aprepro_element_type+aprepro_input_file_string+aprepro_materials_string)
+
+
+    return dictionary_of_parts
+
+
+@time_function(logtime_data)
+def save_components_as_h5m_file(dictionary_of_parts, output_folder, blanket_type):
     # this does not work at the moment
     #os.environ["CUBIT_PLUGIN_DIR"] = '/opt/Trelis-16.4/bin/plugins/svalinn/'
     try:
         os.makedirs(output_folder)
     except:
         pass
-    aprepro_output_file_string = ' "output_folder='+"'"+output_folder+"'"+'"'
-    aprepro_input_file_string=' "inputs='+"'"
-    aprepro_part_name_string =' "parts='+"'"
+    aprepro_output_file_string = ' "output_folder=' + "'" + output_folder + "'" + '"'
+    aprepro_input_file_string = ' "inputs=' + "'"
+    aprepro_part_name_string = ' "parts=' + "'"
     for component in dictionary_of_parts:
-        aprepro_input_file_string = aprepro_input_file_string+ dictionary_of_parts[component]['step_filename']+','
+        aprepro_input_file_string = aprepro_input_file_string + dictionary_of_parts[component]['step_filename']+','
         aprepro_part_name_string = aprepro_part_name_string + component + ','
 
-    aprepro_input_file_string=aprepro_input_file_string[:-1]+"'" + '"'
-    aprepro_part_name_string =aprepro_part_name_string[:-1]+"'" + '"'
-
+    aprepro_input_file_string = aprepro_input_file_string[:-1] + "'" + '"'
+    aprepro_part_name_string = aprepro_part_name_string[:-1] + "'" + '"'
 
     os.system('rm cubit*.jou')
     os.system('export CUBIT_PLUGIN_DIR="/opt/Trelis-16.4/bin/plugins/svalinn/"')
@@ -149,7 +244,7 @@ def save_components_as_h5m_file(dictionary_of_parts,output_folder,blanket_type):
 
     #print('trelis '+path_to_trelis_script+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
-    os.system('trelis -nographics -batch '+path_to_trelis_script+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
+    os.system('trelis -nographics -batch '+ path_to_trelis_script+aprepro_input_file_string+aprepro_part_name_string+aprepro_output_file_string)
 
     #print('trelis h5m done')
 
@@ -614,32 +709,40 @@ def find_largest_face(solid_or_list_of_faces,n=1):
 @time_function(logtime_data)
 def chop_top_and_bottom_from_cooling_plate(plate, channel_poloidal_height,plate_poloidal_height):
 
-    #print('plate',plate)
-
     largest_face, largest_face_id=find_largest_face(plate)
+    #print(largest_face, largest_face_id)
+    
+    second_largest_face, second_largest_face_id=find_largest_face(plate,2)
+    #print(second_largest_face, second_largest_face_id)
 
     thickness_of_top_bottom_layers = (plate_poloidal_height-channel_poloidal_height)/2.0
+    #print('thickness_of_top_bottom_layers',thickness_of_top_bottom_layers)
+    
+    largest_face.scale(2.0, largest_face.CenterOfMass)
+    second_largest_face.scale(2.0, second_largest_face.CenterOfMass)
 
-#    poly_face.scale(2.0, poly_face.CenterOfMass)
+    new_face1 = largest_face.extrude(largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
+    
+    new_face2 = second_largest_face.extrude(second_largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
 
-    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * thickness_of_top_bottom_layers)
+    top = new_face1.common(plate) #new_face1.fuse(new_face2)
+    #print('top vol',top.Volume)
+    
+    bottom = new_face2.common(plate) #new_face1.fuse(new_face2)
+    #print('bottom vol',bottom.Volume)    
+    
+    #top.exportStep('/home/jshim/detailed_HCLL/step/top.step')  
+    #bottom.exportStep('/home/jshim/detailed_HCLL/step/bottom.step')  
 
-    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -thickness_of_top_bottom_layers)
+    middle = (plate.cut(top)).cut(bottom)
+    #print('mid vol',middle.Volume)
 
-    top = new_face1.fuse(new_face2)
+    top_bottom = plate.cut(middle)
+    
+    #middle.exportStep('/home/jshim/detailed_HCLL/step/middle.step')
+    #top_bottom.exportStep('/home/jshim/detailed_HCLL/step/top_bottom.step')
 
-    new_face1 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * -(channel_poloidal_height +thickness_of_top_bottom_layers ))
-
-    new_face2 = plate.Faces[largest_face_id].extrude(largest_face.normalAt(0, 0) * (channel_poloidal_height +thickness_of_top_bottom_layers ))
-
-    middle = new_face1.fuse(new_face2)
-
-    pre_skinny_div_to_cool = plate.common(middle)
-    skinny_div_to_cool = pre_skinny_div_to_cool.cut(top)
-
-    top_bottom = plate.cut(skinny_div_to_cool)
-
-    return skinny_div_to_cool, top_bottom
+    return middle, top_bottom
 
 
 @time_function(logtime_data)
@@ -680,7 +783,7 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
 
     try:
         for counter, step in enumerate(step_list[1:]):
-            #print(counter,step)
+            #print('adding cooling channel ',counter)
 
             #cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
             cooling_solid = div_to_cool.makeThickness(faces_not_in_first_wall, -step, 0, True)
@@ -706,18 +809,22 @@ def add_cooling_pipes_to_div(div_to_cool,channel_poloidal_height,channel_radial_
                     list_of_cooling_pipes.append(cut_solid)
 
 
-            #if counter!=0 and cut_solid.Volume < 3000000:
-            #    break
+                print('cooling channel formation cut_solid.Volume',cut_solid.Volume)
+                # if cut_solid.Volume < 3000000:
+                #     print('cut volume is small so this is the last cooling channel')
+                #     break
 
             previous_solid=cooling_solid
+
+        list_of_structure.append(middle.cut(cooling_solid))
+        list_of_structure.append(top_bottom)
+        
     except:
         pass
-        #print('error the end of the cooling channels has been reached')
-
-    list_of_structure.append(middle.cut(cooling_solid))
-    list_of_structure.append(top_bottom)
+        print('error the end of the cooling channels has been reached')
 
 
+    
     return list_of_cooling_pipes,list_of_structure
 
 
