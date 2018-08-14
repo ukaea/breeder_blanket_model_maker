@@ -203,7 +203,7 @@ material_dictionary = define_neutronics_materials(enrichment_fraction=0.8)
 neutronics_parameters = define_neutronics_model_parmeters(list_detailed_modules_parts=list_of_detailed_modules_parts,
                                                           material_dictionary=material_dictionary,
                                                           output_directory=output_directory,
-                                                          nps=10000)
+                                                          nps=1e6)
 
 directory_path_to_serpent_output, number_of_stl_parts = make_serpent_stl_based_input_file(neutronics_parameters)
 

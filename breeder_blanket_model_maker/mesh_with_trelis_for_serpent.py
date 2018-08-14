@@ -255,6 +255,7 @@ def write_serpent_detector():
   print('file_name_and_path', file_name_and_path)
   outputfile = open(file_name_and_path, 'w')
   outputfile.write('det umesh_det_n n \n')
+  outputfile.write('    dr -4 void \n')
   outputfile.write('    dumsh all_um_geometry \n')
   outputfile.write(str(len(elements_in_all_volume))+' \n')
   for element_counter in range(1,len(elements_in_all_volume)+1):
@@ -266,6 +267,7 @@ def write_serpent_detector():
   print('file_name_and_path',file_name_and_path)
   outputfile = open(file_name_and_path, 'w')
   outputfile.write('det umesh_det_p p \n')
+  outputfile.write('    dr -26 void \n')
   outputfile.write('    dumsh all_um_geometry \n')
   outputfile.write(str(len(elements_in_all_volume))+' \n')
   for element_counter in range(1,len(elements_in_all_volume)+1):

@@ -168,12 +168,14 @@ def return_serpent_file_run_params(tallies,nps):
 
     lines_for_file.append("set lost 100")  # allows for 100 lost particles
     lines_for_file.append("set usym sector 3 2 0.0 0.0 0 10") #a 10 degree slice with boundary conditions
+    #lines_for_file.append("set usym all_um_geometry 3 2 0.0 0.0 0 10") #a 10 degree slice with boundary conditions
 
     for tally in tallies:
         particle_type= tally['particle_type']
         if particle_type =='p':
             print('Tally with photons found, including photons in the simulation')
             lines_for_file += ["set ngamma 2 %analog gamma"]
+            lines_for_file += ["set inftrk 10000 0 10000 0"]
             lines_for_file += ['set pdatadir "/opt/serpent2/photon_data/"']
             lines_for_file += ['set ekn']
             break
@@ -306,6 +308,8 @@ def return_plasma_source(plasma_source_name='EU_baseline_2015') :
         lines_for_file.append('% MUIR GAUSSIAN FUSION ENERGY SPECTRUM IN USER DEFINED SUBROUTINE')
         lines_for_file.append('% PARAMETERS TO DESCRIBE THE PLASMA:')
         lines_for_file.append('src 1 si 16')
+        lines_for_file.append('src 1 uss 2 si 0') #new method 2=demo, 1=iter
+        #lines_for_file.append('src 1 si 16') #old demo only method
         lines_for_file.append('3 11')
         lines_for_file.append(idum1+' % IDUM(1) ')
         lines_for_file.append(idum2_number_of_cells_to_follow+' % IDUM(2) = number of valid cell numbers to follow')

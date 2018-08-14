@@ -11,7 +11,7 @@ import os
 from collections import Counter
 import collections
 from collections import OrderedDict
-import rewrite_cad_files
+from breeder_blanket_model_maker.rewrite_cad_files import *
 import Mesh
 import Draft
 import MeshPart

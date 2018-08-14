@@ -290,13 +290,13 @@ def find_facets(file):
 
 
     for f in solid_mesh.Facets: 
-        print f
-        print ''
-        print f.Points
-        print ''
-        print f.PointIndices
-        print ''
-        print ''
+        print(f)
+        print('')
+        print(f.Points)
+        print('')
+        print(f.PointIndices)
+        print('')
+        print('')
 
     print(len(solid_mesh.Facets))
 
