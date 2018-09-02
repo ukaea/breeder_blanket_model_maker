@@ -12,17 +12,17 @@ import os
 from collections import Counter
 import collections
 from collections import OrderedDict
-import rewrite_cad_files
 import Mesh
 import Draft
 import MeshPart
 import numpy as np
 import heapq
-from decorator import time_function
 import breeder_blanket_model_maker
+from breeder_blanket_model_maker.decorator import time_function
+from breeder_blanket_model_maker.rewrite_cad_files import *
 import pkg_resources
 
-logtime_data= []
+logtime_data = []
 
 @time_function(logtime_data)
 def make_cylinder_slice(log_time=logtime_data,angle=10):
@@ -614,6 +614,7 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
 
     number_of_steps = int(math.ceil(  len(poloidal_segmentations_list)*((longest_edge.Length*1.15)/ sum(poloidal_segmentations_list)  )))
 
+
     cumlative_extrusion_lengths1 = convert_distances_into_cumlative_distances(distances =poloidal_segmentations_list, number_of_distances=number_of_steps, half_first_layer=True)
 
     cumlative_extrusion_lengths2 = [i * -1 for i in cumlative_extrusion_lengths1]
@@ -641,8 +642,8 @@ def chop_up_poloidally(midpoint,poloidal_segmentations,envelope,method,top_botto
     if method =='first_wall':
         #print('first wall selected, treading the triangular corners differently')
 
-        slices_of_blanket1=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths1, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
-        slices_of_blanket2=exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths2, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
+        slices_of_blanket1 = exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths1, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
+        slices_of_blanket2 = exstrude_and_cut_solids_up_to_change_in_shape(list_of_distances=cumlative_extrusion_lengths2, face=poly_face,envelope=envelope,backtrack_id=2,offset=0)
 
     if method =='HCLL':
 

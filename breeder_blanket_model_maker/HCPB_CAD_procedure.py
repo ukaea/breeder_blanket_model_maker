@@ -12,11 +12,11 @@ import os
 from collections import Counter
 import collections
 from collections import OrderedDict
-import rewrite_cad_files
 import Mesh
 import Draft
 import MeshPart
-from common_CAD_functions import *
+from breeder_blanket_model_maker.rewrite_cad_files import *
+from breeder_blanket_model_maker.common_CAD_functions import *
 
 def HCPB_detailed_module(blanket_parameters_dict):
 

@@ -30,7 +30,7 @@ import os
 import Mesh
 import Draft
 import MeshPart
-from common_CAD_functions import *
+from breeder_blanket_model_maker.common_CAD_functions import *
 import collections
 from collections import OrderedDict
 

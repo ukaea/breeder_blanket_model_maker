@@ -5,12 +5,12 @@ import collections
 from collections import OrderedDict
 
 def read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts):
-    
+
     print(list_of_detailed_modules_parts)
     for entry in list_of_detailed_modules_parts:
         if 'slice_envelope' in entry.keys():
             step_filename = entry['slice_envelope']['step_filename']
-    
+
     print('step_filename',step_filename)
     #print(list_of_detailed_modules_parts['slice_envelope']['step_filename'])
 
@@ -19,14 +19,14 @@ def read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts):
     input_dirname =os.path.dirname(step_filename)
 
     input_filename_and_path = os.path.join(input_dirname,input_filename)
-    
+
     print('input_filename_and_path',input_filename_and_path)
 
     with open(input_filename_and_path) as f:
         contents = f.readlines()
     #print(contents)
 
-        
+
     for i, line in enumerate(contents):
         if line.strip() == '':
             break
@@ -34,12 +34,41 @@ def read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts):
             if line[0].isdigit():
                 #print('cell found')
                 #print(line)
-                cell_line = 'cell 10    0   fill all_um_geometry ' +' '.join(line.split()[2:])
+                cell_line = 'cell 10    0   fill all_um_geometry ' + ' '.join(line.split()[2:])
     print('new cell_line',cell_line)
-    
-    
+
+#add this to get the rotated um geometry
+# angles = []
+
+# angle = 13+1.0/3.0
+# for i in range(1,36):
+#     if i%2 ==0:
+#         print(i*10,',')
+#     else:
+#         print(i*10+3+(1.0/3.0),',')
+        
+# for i, angle in enumerate(angles):
+#     print('surf '+str(i+1)+'100 plane 0.0581448 -0.9983082 0.0000000 -0.1193340')
+#     print('trans s '+str(i+1)+'100 0 0 1 0 0 '+str(angle))
+#     print('surf '+str(i+1)+'101  plane 0.0691687 0.0080847 0.9975722 84.8948297')
+#     print('trans s '+str(i+1)+'101 0 0 1 0 0 '+str(angle))
+#     print('surf '+str(i+1)+'102  plane 0.0691687 0.0080847 0.9975722 93.4602577')
+#     print('trans s '+str(i+1)+'102 0 0 1 0 0 '+str(angle))
+#     print('surf '+str(i+1)+'103  plane 0.1736482 -0.9848078 0.0000000 0.9999999')
+#     print('trans s '+str(i+1)+'103 0 0 1 0 0 '+str(angle))
+#     print('surf '+str(i+1)+'104  plane 0.9908270 0.1158111 -0.0696396 1216.1005127')
+#     print('trans s '+str(i+1)+'104 0 0 1 0 0 '+str(angle))
+#     print('surf '+str(i+1)+'105  plane 0.9908270 0.1158111 -0.0696396 1307.1005114')
+#     print('trans s '+str(i+1)+'105 0 0 1 0 0 '+str(angle))
+#     print()
+
+# print('cell 10    0   fill all_um_geometry ( 101  104  -100  -105  103  -102) :')
+# for i, angle in enumerate(angles):
+#     print('                                    ('+str(i+1)+'101 '+str(i+1)+'104 -'+str(i+1)+'100 -'+str(i+1)+'105 '+str(i+1)+'103 -'+str(i+1)+'102) : ')
+
+
     surface_translate_dict= {'P':'plane','PY':'py','PZ':'pz','PX':'px'}
-    
+
     new_surfaces =[]
     for line in contents[i+1:]:
         if line.strip() == '':
@@ -49,8 +78,8 @@ def read_mccad_csg_mcnp_csg(list_of_detailed_modules_parts):
                 #print('surface found')
                 #print(line)
                 chop_up = line.split()
-                new_surfaces.append('surf '+ ' '.join([chop_up[0],surface_translate_dict[chop_up[1]],' '.join(chop_up[2:]) ])+' % edge surface for blanket slice')
-                
+                new_surfaces.append('surf ' + ' '.join([chop_up[0],surface_translate_dict[chop_up[1]],' '.join(chop_up[2:]) ])+' % edge surface for blanket slice')
+
     return cell_line, new_surfaces
 
 def return_serpent_file_head(include_um_mesh,list_of_detailed_modules_parts):
@@ -83,7 +112,7 @@ def return_serpent_file_head(include_um_mesh,list_of_detailed_modules_parts):
 
         lines_for_file.append('solid 1 all_um_geometry bg_for_um_and_stl')
         lines_for_file.append('1000 2 10 5   % search mesh parameters for octree')
-        lines_for_file.append('scaled_points')
+        lines_for_file.append('points')
         lines_for_file.append('faces')
         lines_for_file.append('owner')
         lines_for_file.append('neighbour')
@@ -160,6 +189,7 @@ def return_serpent_file_run_params(tallies,nps):
     lines_for_file.append('set outp 1000')
     lines_for_file.append('set srcrate 1.0')
     lines_for_file.append('set acelib "/opt/serpent2/xsdir.serp"')
+    lines_for_file.append('% set acelib "/home/mcnp/xs/xsdir_serp_fendl_jeff_tendl_photon"')
 
     lines_for_file.append('\n\n')
 
@@ -177,6 +207,7 @@ def return_serpent_file_run_params(tallies,nps):
             lines_for_file += ["set ngamma 2 %analog gamma"]
             lines_for_file += ["set inftrk 10000 0 10000 0"]
             lines_for_file += ['set pdatadir "/opt/serpent2/photon_data/"']
+            lines_for_file += ['% set pdatadir "/home/mcnp/xs/photon_data/"']
             lines_for_file += ['set ekn']
             break
 
@@ -307,9 +338,9 @@ def return_plasma_source(plasma_source_name='EU_baseline_2015') :
         lines_for_file.append('% --------------------- SOURCE SPECIFICATION ---------------------')
         lines_for_file.append('% MUIR GAUSSIAN FUSION ENERGY SPECTRUM IN USER DEFINED SUBROUTINE')
         lines_for_file.append('% PARAMETERS TO DESCRIBE THE PLASMA:')
-        lines_for_file.append('src 1 si 16')
-        lines_for_file.append('src 1 uss 2 si 0') #new method 2=demo, 1=iter
-        #lines_for_file.append('src 1 si 16') #old demo only method
+        
+        #lines_for_file.append('src 1 uss 2 si 0') #new method 2=demo, 1=iter
+        lines_for_file.append('src 1 si 16') #old demo only method
         lines_for_file.append('3 11')
         lines_for_file.append(idum1+' % IDUM(1) ')
         lines_for_file.append(idum2_number_of_cells_to_follow+' % IDUM(2) = number of valid cell numbers to follow')
@@ -402,7 +433,7 @@ def make_serpent_stl_based_input_file(neutronics_parameters_dictionary):
 
     serpent_file += return_serpent_file_material_cards(components, material_dictionary, neutronics_parameters_dictionary['output_folder'])
 
-
+    
     if neutronics_parameters_dictionary['include_umesh'] == True:
         create_matfile_with_material_names(output_folder=neutronics_parameters_dictionary['output_folder'],material_dictionary=material_dictionary)
     

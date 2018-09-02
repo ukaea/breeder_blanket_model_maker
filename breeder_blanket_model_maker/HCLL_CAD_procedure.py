@@ -11,11 +11,11 @@ import os
 from collections import Counter
 import collections
 from collections import OrderedDict
-import rewrite_cad_files
 import Mesh
 import Draft
 import MeshPart
-from common_CAD_functions import *
+from breeder_blanket_model_maker.common_CAD_functions import *
+from breeder_blanket_model_maker.rewrite_cad_files import *
 import pprint
 
 def HCLL_detailed_module(blanket_parameters_dict):
@@ -134,14 +134,17 @@ def HCLL_detailed_module(blanket_parameters_dict):
           #dictionary_of_parts['first_wall_material']['part'] = [first_wall_front_layer, first_wall_back_layer]
 
           first_wall_poloidally_segmented = chop_up_poloidally(midpoint=first_wall_removed_envelope_midpoint,
-                                                                    poloidal_segmentations=blanket_parameters_dict['first_wall_channel_poloidal_segmentations'],
-                                                                    envelope=first_wall_middle_layer,
-                                                                    method='first_wall',
-                                                                    top_bottom_edges=front_face_torodial_edges_to_fillet,
-                                                                    front_face=envelope_front_face)
+                                                               poloidal_segmentations=blanket_parameters_dict['first_wall_channel_poloidal_segmentations'],
+                                                               envelope=first_wall_middle_layer,
+                                                               method='first_wall',
+                                                               top_bottom_edges=front_face_torodial_edges_to_fillet,
+                                                               front_face=envelope_front_face)
 
-          for i, key in enumerate(blanket_parameters_dict['first_wall_channel_poloidal_segmentations']):
-              dictionary_of_parts[key]['part'] = first_wall_poloidally_segmented[i]
+          #for i, key in enumerate(blanket_parameters_dict['first_wall_channel_poloidal_segmentations']):
+          #    dictionary_of_parts[key]['part'] = first_wall_poloidally_segmented[i]
+
+          dictionary_of_parts['first_wall_material']['part']=first_wall_poloidally_segmented[0]
+          dictionary_of_parts['first_wall_coolant']['part']=first_wall_poloidally_segmented[1]
 
           dictionary_of_parts['first_wall_material']['part'] = dictionary_of_parts['first_wall_material']['part']+[first_wall_front_layer, first_wall_back_layer]
 
@@ -230,6 +233,8 @@ def HCLL_detailed_module(blanket_parameters_dict):
           dictionary_of_parts = save_components_as_step(dictionary_of_parts = dictionary_of_parts, 
                                                       output_folder = output_folder_step, 
                                                       filename_prefix =prefix)
+
+ 
 
       if 'merged_stl' in output_files:
           dictionary_of_parts = save_components_as_merged_stl_file(dictionary_of_parts=dictionary_of_parts,

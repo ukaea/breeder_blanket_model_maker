@@ -27,25 +27,25 @@ def find_number_of_volumes_in_each_step_file():
     body_ids=''
     cubit.cmd('reset')
     volumes_in_each_step_file=[]
-    for i in range(0,len(input_locations)):
-      current_vols =cubit.parse_cubit_list("volume", "all")
-      print('input       ',    input_locations[i])
-      if input_locations[i].endswith('.sat'):
-        cubit.cmd('import acis "'+input_locations[i]+'" nofreesurfaces separate_bodies')
-      if input_locations[i].endswith('.stp') or input_locations[i].endswith('.step'):
-        cubit.cmd('import step "'+input_locations[i]+'" heal')
-      if input_locations[i].endswith('.stl'):
-        cubit.cmd('import stl "'+input_locations[i]+'" merge')
-      #body_ids=body_ids+' '+str(i+1)
-      all_vols =cubit.parse_cubit_list("volume", "all")
-      new_vols = set(current_vols).symmetric_difference(set(all_vols))
-      print('all_vols    ',str(all_vols))
-      print('current_vols',str(current_vols))
-      print('new_vols    ',str(new_vols))
-      #volumes_in_each_step_file.append(new_vols)
-      new_vols=map(str, new_vols)
-      new_vols=' '.join(new_vols)
-      volumes_in_each_step_file.append(new_vols.split())
+    for i in range(0, len(input_locations)):
+        current_vols = cubit.parse_cubit_list("volume", "all")
+        print('input       ', input_locations[i])
+        if input_locations[i].endswith('.sat'):
+            cubit.cmd('import acis "' + input_locations[i] + '" nofreesurfaces separate_bodies')
+        if input_locations[i].endswith('.stp') or input_locations[i].endswith('.step'):
+            cubit.cmd('import step "' + input_locations[i] + '" heal')
+        if input_locations[i].endswith('.stl'):
+            cubit.cmd('import stl "' + input_locations[i] + '" merge')
+        #body_ids=body_ids+' '+str(i+1)
+        all_vols = cubit.parse_cubit_list("volume", "all")
+        new_vols = set(current_vols).symmetric_difference(set(all_vols))
+        print('all_vols    ', str(all_vols))
+        print('current_vols', str(current_vols))
+        print('new_vols    ', str(new_vols))
+        #volumes_in_each_step_file.append(new_vols)
+        new_vols = map(str, new_vols)
+        new_vols = ' '.join(new_vols)
+        volumes_in_each_step_file.append(new_vols.split())
     print('volumes_in_each_step_file')
     print(volumes_in_each_step_file)
     print('body_ids')
@@ -98,7 +98,7 @@ if "materials" in aprepro_vars:
     materials_list = cubit.get_aprepro_value_as_string("materials").split(',')
   print('matieral name ='+str(materials_list))
 
-prefix_string=''
+prefix_string = ''
 if "prefix" in aprepro_vars:
   prefix_string = cubit.get_aprepro_value_as_string("prefix")
   print('prefix name ='+str(prefix_string))
@@ -126,7 +126,7 @@ if len(materials_list)!=len(input_locations):
 
 volumes_in_each_step_file = find_number_of_volumes_in_each_step_file()
 print('volumes_in_each_step_file is',volumes_in_each_step_file)
-
+cubit.cmd('vol all scale 0.001')
 #  
 materials_made=[]
 cubit.cmd('set duplicate block elements off')
@@ -166,11 +166,11 @@ cubit.cmd('mesh volume all')
 
 #cubit.cmd('scale mesh vol all Multiplier 0.1')
 
-materials_list_id=[]
-materials_made=[]
-material_counter=1
+materials_list_id = []
+materials_made = []
+material_counter = 1
 for material in materials_list:
-  print('material',material)
+  print('material', material)
   if material in materials_made:
     previous_material_id = materials_made.index(material)
     materials_list_id.append(materials_list_id[previous_material_id])
@@ -179,10 +179,10 @@ for material in materials_list:
     materials_made.append(material)
     material_counter=material_counter+1
 
-print('materials_list_id',materials_list_id)
-print('materials_list',materials_list_id)
+print('materials_list_id', materials_list_id)
+print('materials_list', materials_list_id)
 
-elements_in_each_volume=[]
+elements_in_each_volume = []
 for vols in volumes_in_each_step_file:
     print('volumes in this file ',vols)
     elements_in_volume = cubit.parse_cubit_list("element", " in volume " +' '.join(vols))
@@ -201,49 +201,57 @@ def rename_files_with_prefix(prefix):
     os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','neighbour') , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'neighbour' ))
     os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','owner')     , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'owner' ))
     os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','points')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'points' ))
-    os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','scaled_points')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'scaled_points' ))
+    #os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','scaled_points')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'scaled_points' ))
     os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','detector_p')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'detector_p' ))
     os.rename(os.path.join(output_dir,'serpent_mesh','constant','polyMesh','detector_n')    , os.path.join(output_dir,'serpent_mesh/constant/polyMesh/',prefix+'detector_n' ))
   else:
     print('no prefix given')
 
 def move_um_mesh_files(output_dir):
-  for file in ['matfile', 'boundary', 'faces', 'neighbour', 'owner', 'points', 'scaled_points','detector_p','detector_n']:
+  for file in ['matfile', 'boundary', 'faces', 'neighbour', 'owner','detector_p','detector_n','points']:
     print('renaming ',os.path.join(output_dir, 'serpent_mesh','constant','polyMesh',file))
     print('   to ',os.path.join(output_dir, file))
     os.rename(os.path.join(output_dir, 'serpent_mesh','constant','polyMesh',file),os.path.join( output_dir,file) )
 
 
 def write_openfoam_material_card(elements_in_each_volume,materials_list_id,output_dir):
-  file_name_and_path = os.path.join(output_dir, 'serpent_mesh', 'constant', 'polyMesh', 'matfile')
-  #outputfile = open(file_name_and_path, 'w')
-  #print('elements_in_each_volume',elements_in_each_volume)
-  print('materials_list_id',materials_list_id)
-  #file_name_and_path =os.path.sep.join['serpent_mesh','constant','polyMesh','matfile']
-  print('file_name_and_path',file_name_and_path)
-  outputfile = open(file_name_and_path, 'w')
-  total_number_of_elements=0
-  for volume , mat_id in zip(elements_in_each_volume,materials_list_id):
-    total_number_of_elements = total_number_of_elements+ len(volume)
-  outputfile.write(str(total_number_of_elements)+'\n')
-  elements_and_materials = []
-  elements_list=[]
-  for volume , mat_id in zip(elements_in_each_volume,materials_list_id):
-    for element in volume:
-      elements_and_materials.append((element,mat_id))
-      elements_list.append(element)
-      #print(element,mat_id)
-  #print('elements_and_materials',elements_and_materials)
-  sorted_materials_ids =[x for (y,x) in sorted(elements_and_materials)]
-  sorted_elements = sorted(elements_list)
-  #print('sorted_elements',sorted_elements)
-  for i , each_volume in enumerate(elements_in_each_volume):
-    for elements in each_volume:
-      outputfile.write(materials_list[i]+'\n')  
-  #for x in range(0,len(sorted_elements)):
-    #print(sorted_elements[x],sorted_materials_ids[x])
-  #  outputfile.write(str(sorted_materials_ids[x])+'\n')
-  outputfile.close()
+    file_name_and_path = os.path.join(output_dir, 'serpent_mesh', 'constant', 'polyMesh', 'matfile')
+    #outputfile = open(file_name_and_path, 'w')
+    #print('elements_in_each_volume',elements_in_each_volume)
+    print('materials_list_id', materials_list_id)
+    #file_name_and_path =os.path.sep.join['serpent_mesh','constant','polyMesh','matfile']
+    print('file_name_and_path', file_name_and_path)
+    outputfile = open(file_name_and_path, 'w')
+    total_number_of_elements = 0
+    for volume, mat_id in zip(elements_in_each_volume, materials_list_id):
+        total_number_of_elements = total_number_of_elements+ len(volume)
+    outputfile.write(str(total_number_of_elements) + '\n')
+    elements_and_materials = []
+    elements_list = []
+    for volume, mat_id in zip(elements_in_each_volume, materials_list_id):
+        for element in volume:
+            elements_and_materials.append((element, mat_id))
+            elements_list.append(element)
+        #print(element,mat_id)
+    #print('elements_and_materials',elements_and_materials)
+    sorted_materials_ids = [x for (y, x) in sorted(elements_and_materials)]
+    sorted_elements = sorted(elements_list)
+    #print('sorted_elements',sorted_elements)
+    string_to_write_to_file = ''
+    print('elements_in_each_volume', elements_in_each_volume)
+    print('materials_list')
+    for i, each_volume in enumerate(elements_in_each_volume):
+        for elements in each_volume:
+            string_to_write_to_file += materials_list[i] + '\n'
+            #print(materials_list[i])
+        #outputfile.write(materials_list[i] + '\n')
+    outputfile.write(string_to_write_to_file)
+    #print('string_to_write_to_file', string_to_write_to_file)
+    #for x in range(0,len(sorted_elements)):
+      #print(sorted_elements[x],sorted_materials_ids[x])
+    #  outputfile.write(str(sorted_materials_ids[x])+'\n')
+    outputfile.close()
+
 
 
 
@@ -275,27 +283,6 @@ def write_serpent_detector():
   outputfile.close()  
 
 
-def rewrite_serpent_points(scale):
-    print('scaling points by ',scale)
-    file_name_and_path = os.path.join(output_dir,'serpent_mesh','constant','polyMesh','points')
-    with open(file_name_and_path) as f:
-        lines = f.read().splitlines()
-    new_lines=[]
-    for line in lines:
-        if line.startswith('(') and line.endswith(')'):
-            coords=[]
-            for coord in line[1:-1].split():
-                new_coord = float(coord)*scale
-                coords.append(str(new_coord))
-            line = '('+' '.join(coords)+')'
-        new_lines.append(line)
-    new_file_name_and_path = os.path.join(output_dir,'serpent_mesh','constant','polyMesh','scaled_points')
-    with open(new_file_name_and_path,"w") as f2:
-        for line in new_lines:
-            f2.write(line+'\n')
-    print(new_lines)
-    
-
 os.mkdir(os.path.join(output_dir, 'serpent_mesh'))
 os.mkdir(os.path.join(output_dir, 'serpent_mesh', 'constant'))
 os.mkdir(os.path.join(output_dir, 'serpent_mesh', 'constant', 'polyMesh'))
@@ -305,8 +292,6 @@ write_serpent_detector()
 write_openfoam_material_card(elements_in_each_volume, materials_list_id,output_dir)
 
 cubit.cmd('export openfoam "' + os.path.join(output_dir, 'serpent_mesh') + '" overwrite')
-
-rewrite_serpent_points(scale=0.001)
 
 move_um_mesh_files(output_dir)
 #rename_files_with_prefix(prefix_string)
