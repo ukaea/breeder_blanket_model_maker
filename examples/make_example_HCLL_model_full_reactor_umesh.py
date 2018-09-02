@@ -50,8 +50,8 @@ def define_blanket_geometry_parmeters(blanket_type,input_files,output_directory,
     back_plates_thicknesses_ordered_dict['back_plate_3']=10
 
     first_wall_channel_poloidal_segmentations_dict=OrderedDict()
-    first_wall_channel_poloidal_segmentations_dict['first_wall_material']=first_wall_channel_poloidal_mm
     first_wall_channel_poloidal_segmentations_dict['first_wall_coolant']=first_wall_channel_pitch_mm
+    first_wall_channel_poloidal_segmentations_dict['first_wall_material']=first_wall_channel_poloidal_mm
 
 
     list_of_compressed_arguments=[]
@@ -186,7 +186,7 @@ output_directory='/home/jshim/detailed_HCLL'
 list_of_geometry_parameters = define_blanket_geometry_parmeters(blanket_type = 'HCLL',
                                                                 input_files = ['/home/jshim/Eurofusion_baseline_2016/envelopes/mod' + str(x) + '.step' for x in range(1,27)],#27,
                                                                 output_directory = output_directory,
-                                                                poloidal_lithium_lead_in_mm =80.0)
+                                                                poloidal_lithium_lead_in_mm =35.4) #80 
 
 list_of_detailed_modules_parts = detailed_module(list_of_geometry_parameters)
 
