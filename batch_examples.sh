@@ -1,0 +1,8 @@
+python2 make_example_DCLL_model_full_reactor.py
+python2 make_example_DCLL_model.py
+python2 make_example_HCLL_model_full_reactor.py
+python2 make_example_HCLL_model.py
+python2 make_example_HCPB_model_full_reactor.py
+python2 make_example_HCPB_model.py
+python2 make_example_WCLL_model_full_reactor.py
+python2 make_example_WCLL_model.py
